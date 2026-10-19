@@ -135,8 +135,8 @@
   .tr.agree-buy { border-color: #3b8cff88; } .tr.agree-sell { border-color: #ff8a3d88; }
 
   /* rodape */
-  .bottom { grid-area: bottom; display: grid; gap: var(--gap); grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.1fr); min-height: 0; }
-  .bottom.nochips { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+  .bottom { grid-area: bottom; display: grid; gap: var(--gap); grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr) minmax(0, 1.25fr) minmax(0, 1fr); min-height: 0; }
+  .bottom.nochips { grid-template-columns: minmax(0, .9fr) minmax(0, 1.25fr) minmax(0, 1fr); }
   .bottom.nochips #chipscard { display: none; }
   .chips { position: absolute; inset: 26px 8px 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
            grid-auto-rows: 44px; gap: 6px; overflow: hidden; align-content: start; }
@@ -236,6 +236,7 @@
   <div class="bottom">
     <div class="card" id="chipscard"><h2>Trades do Megazord (mais recente primeiro)</h2><div class="chips" id="chips"></div></div>
     <div class="card"><h2 id="board-title">Placar do dia por trader</h2><div class="rows" id="leader"></div></div>
+    <div class="card"><h2 id="provas-title">Provas do time</h2><div class="plot" id="provas" style="inset:24px 4px 4px"></div></div>
     <div class="card"><h2 id="team-title">Time</h2><div class="rows" id="teampanel"></div><div class="plot" id="learn" style="inset:24px 4px 4px;display:none"></div></div>
   </div>
 </div>
@@ -277,7 +278,7 @@ async function pollIndex() {
     $('mode').textContent = { treino: 'treinando', replay: 'replay', ao_vivo: 'ao vivo' }[idx.mode] || idx.mode;
     $('mode').className = 'badge b-' + idx.mode;
     $('follow-lbl').textContent = live() ? 'ao vivo' : 'seguir';
-    renderEpisodeList(); renderTeam(); renderXP();
+    renderEpisodeList(); renderTeam(); renderXP(); renderProvas();
     const newest = idx.episodes.at(-1);
     if (!newest) return banner(live() ? 'Aguardando o mercado' : 'Aguardando o time', idx.live?.status || 'nenhum pregao publicado ainda');
     if (live()) {
@@ -307,7 +308,11 @@ function renderXP() {
     $('sub').textContent = `rodada ${t.round ?? '-'} · ${t.phase || ''}`;
     $('xp').style.width = (t.round_progress ?? 0) * 100 + '%';
   } else if (live()) {
-    $('sub').textContent = index.live?.source || '';
+    const bk = index.live?.broker;
+    $('sub').textContent = bk
+      ? `MT5 ${bk.symbol}: ${bk.position > 0 ? 'COMPRADO' : bk.position < 0 ? 'VENDIDO' : 'ZERADO'} · dia R$ ${sgn(bk.pnl_brl, 2)} · ${bk.orders_today} ordens`
+        + (!bk.algo_trading ? ' · ⚠ LIGUE O ALGO TRADING' : bk.blocked ? ` · ⛔ ${bk.blocked}` : bk.last ? ` · ultima: ${bk.last.side || ''} ${bk.last.msg}` : '')
+      : (index.live?.source || '');
     $('xp').style.width = ep ? Math.min(100, 100 * ep.bars.length / 565) + '%' : '0';
   } else {
     const pos = index.episodes.findIndex(e => e.id === epId) + 1;
@@ -532,6 +537,36 @@ function renderLeader(st) {
 }
 
 // ---------------------------------------------------------------- painel do time (treino / historico)
+// prova do time em cada rodada: Megazord (barras) e media dos traders (linha), sempre nos mesmos pregoes de teste
+let provasStamp = '';
+function renderProvas() {
+  const h = index.team?.history || [];
+  const key = JSON.stringify(h.map(r => [r.round, r.mz_pts]));
+  if (key === provasStamp) return;
+  provasStamp = key;
+  if (!h.length) {
+    $('provas-title').textContent = 'Provas do time';
+    Plotly.react('provas', [], { ...baseLayout, margin: { l: 10, r: 10, t: 4, b: 10 }, xaxis: { visible: false }, yaxis: { visible: false },
+      annotations: [{ text: 'aguardando a 1a prova<br>(sai no fim de cada rodada de treino)', showarrow: false, font: { color: C.muted, size: 12 }, xref: 'paper', yref: 'paper', x: .5, y: .5 }] }, plotCfg);
+    return;
+  }
+  const last = h.at(-1), prevR = h.at(-2);
+  const trend = prevR ? Math.sign(last.mz_pts - prevR.mz_pts) : 0;
+  $('provas-title').textContent = `Provas do time · ${last.days} pregoes nunca vistos · ultima ${sgn(last.mz_pts)} pts ${trend > 0 ? '▲' : trend < 0 ? '▼' : '='}`;
+  const x = h.map(r => 'R' + r.round);
+  const avg = h.map(r => r.traders.length ? r.traders.reduce((a, b) => a + b, 0) / r.traders.length : null);
+  Plotly.react('provas', [
+    { type: 'bar', x, y: h.map(r => r.mz_pts), marker: { color: h.map(r => r.mz_pts >= 0 ? C.good : C.bad) },
+      customdata: h.map(r => [r.mz_trades, r.mz_hit, r.promoted, r.time]),
+      hovertemplate: '%{x} (%{customdata[3]})<br>MEGAZORD %{y:.0f} pts · %{customdata[0]} trades · acerto %{customdata[1]}<br>promovidos na rodada: %{customdata[2]}<extra></extra>' },
+    { type: 'scatter', x, y: avg, mode: 'lines+markers', line: { color: C.muted, width: 1.5, dash: 'dot' }, marker: { size: 4 },
+      hovertemplate: 'media dos traders %{y:.0f} pts<extra></extra>' },
+    { type: 'scatter', x: h.filter(r => r.promoted).map(r => 'R' + r.round), y: h.filter(r => r.promoted).map(r => r.mz_pts), mode: 'text',
+      text: h.filter(r => r.promoted).map(r => '🏆'.repeat(Math.min(r.promoted, 3))), textposition: 'top center', hoverinfo: 'skip' },
+  ], { ...baseLayout, margin: { l: 44, r: 8, t: 14, b: 20 }, bargap: .25,
+       xaxis: { ...axis, type: 'category' }, yaxis: { ...axis, zeroline: true, zerolinecolor: '#3a4452', tickfont: { family: NUMFONT } } }, plotCfg);
+}
+
 function renderTeam() {
   const t = index.team;
   const box = $('teampanel'), learn = $('learn');

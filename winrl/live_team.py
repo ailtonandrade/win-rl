@@ -64,6 +64,8 @@ class MT5Feed:
         df = pd.DataFrame(r)
         # o ultimo candle ainda esta se formando enquanto o relogio do servidor nao passar do minuto dele
         df = df[df["time"] + 60 <= tick.time]
+        self.server_epoch = int(tick.time)
+        self.last_closed_epoch = int(df["time"].iloc[-1]) if len(df) else 0
         df = pd.DataFrame({
             "time": pd.to_datetime(df["time"], unit="s").dt.tz_localize("America/Sao_Paulo"),
             "open": df["open"], "high": df["high"], "low": df["low"], "close": df["close"],
@@ -75,6 +77,10 @@ class MT5Feed:
             self.ctx_day = today
             self.ctx_start = dates[max(0, len(dates) - 1 - CONTEXT_DAYS)]
         return df[df["time"].dt.date >= self.ctx_start].reset_index(drop=True)
+
+    def is_fresh(self, max_late=90):
+        """O ultimo candle fechou agora ha pouco? (evita mandar ordem por candles antigos, ex.: na recuperacao da manha)"""
+        return getattr(self, "server_epoch", 0) - (getattr(self, "last_closed_epoch", 0) + 60) <= max_late
 
     def server_time(self):
         tick = self.mt5.symbol_info_tick(self.symbol)
@@ -138,6 +144,27 @@ class LiveTeam:
         envs = [b.into(base, last, today, last) for b in self.books]
         return self.rec.episode(envs[-1], envs[:-1], last)
 
+    def real_target(self, last_time) -> int:
+        """Posicao que a conta real deve ter na abertura do proximo candle: a decisao do Megazord
+        com as mesmas regras do treino (tempo minimo/maximo, sem entrar perto do fim) e zerando
+        ZERAR_ANTES_MIN antes do ultimo candle (a corretora nao deixa passar do pregao)."""
+        b = self.books[-1] if self.day is not None else None
+        if b is None or b.pending is None or self.closed_day:
+            return 0
+        target, cfg = ACTION_TO_POS[b.pending], self.s.env
+        if b.pos != 0 and b.bars_in_pos < cfg.min_hold:
+            target = b.pos
+        if b.pos != 0 and 0 < cfg.max_hold <= b.bars_in_pos:
+            target = 0
+        hh, mm = map(int, self.s.fechamento.split(":"))
+        close = last_time.normalize() + pd.Timedelta(hours=hh, minutes=mm)
+        nxt = last_time + pd.Timedelta(minutes=1)
+        if nxt > close - pd.Timedelta(minutes=30) and target != 0 and target != b.pos:
+            target = 0
+        if nxt >= close - pd.Timedelta(minutes=self.s.zerar_antes_min):
+            target = 0
+        return target
+
     def _bar(self, base, today, start, last, j):
         books = self.books
         # 1) executa o que foi decidido no candle anterior (na abertura deste) e marca a mercado
@@ -171,18 +198,36 @@ class LiveTeam:
                          "votes": {"long": wants.count(1), "short": wants.count(-1), "flat": wants.count(0)}}
 
 
-def run_live(feed, fns, names, s: Settings, board, poll=1.0):
-    """Loop principal do modo ao vivo. Publica o dia no painel a cada candle novo."""
+def run_live(feed, fns, names, s: Settings, board, poll=1.0, broker=None):
+    """Loop principal do modo ao vivo. Publica o dia no painel a cada candle novo.
+    Com `broker` (ENVIAR_ORDENS = true, so conta demo) a posicao do Megazord vira ordem no MT5."""
     team = LiveTeam(fns, names, s)
     print(feed.label)
-    print("Paper trading: NENHUMA ordem e enviada. Ctrl+C para parar.")
+    if broker:
+        print(f"ORDENS LIGADAS: {broker.label}. Ctrl+C zera a posicao e para.")
+        problem = broker.check_trading_enabled()
+        if problem:
+            print(f"!! ATENCAO: {problem}. As ordens vao ser recusadas ate isso ser ligado.")
+    else:
+        print("Paper trading: NENHUMA ordem e enviada. Ctrl+C para parar.")
     last_status = 0
     while True:
         df = feed.closed_bars()
         ep = team.update(df)
+        if broker:
+            # so age em candle recem-fechado; na recuperacao da manha (candles antigos) nao manda nada
+            if ep is not None and getattr(feed, "is_fresh", lambda: True)():
+                votes = (ep.get("next") or {}).get("votes", {})
+                target = team.real_target(df["time"].iloc[-1])
+                paper = team.books[-1].pos
+                if broker.position() == 0 and paper != 0 and target == paper:
+                    target = 0  # o trade do Megazord comecou antes (ex.: na recuperacao da manha): nao entra no meio
+                broker.sync(target, f"C{votes.get('long', 0)} V{votes.get('short', 0)}")
+            elif team.closed_day or broker._guards():
+                broker.sync(0, "fim do dia" if team.closed_day else "trava")
         if ep is not None:
             ep["live"] = {"source": feed.label, "updated": datetime.now().strftime("%H:%M:%S"),
-                          "closed": team.closed_day}
+                          "closed": team.closed_day, "broker": broker.status() if broker else None}
             board.upsert_live(ep)
             pos = ep["steps"][-1]["pos"] if ep["steps"] else 0
             votes = (ep.get("next") or {}).get("votes", {})

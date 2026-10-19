@@ -20,7 +20,7 @@ sys.path.insert(0, str(ROOT))
 from winrl.data import load, split  # noqa: E402
 from winrl.env import WinDayTradeEnv  # noqa: E402
 from winrl.live import Board  # noqa: E402
-from winrl.team import load_settings, play_day, play_days, probs_fn, seed_team, team  # noqa: E402
+from winrl.team import splits, load_settings, play_day, play_days, probs_fn, seed_team, team  # noqa: E402
 
 PY = sys.executable
 INI = str(ROOT / "megazord.ini")
@@ -144,7 +144,7 @@ def mode_treino(s):
 
         # prova do time: campeoes + Megazord nos ultimos pregoes de teste (nunca estudados)
         _, fns = champions(s)
-        _, _, test = split(load(s.simbolo))
+        _, _, test = splits(s)
         base = WinDayTradeEnv(test, s.env, random_days=False)
         days = list(range(max(0, len(base.days) - s.dias_teste_painel), len(base.days)))
         mz, ind = play_days(base, fns, [t.name for t in trs], s, days)
@@ -171,6 +171,18 @@ def mode_treino(s):
             return
 
 
+def history_rows(s):
+    """Resultado da prova do time (teste: pregoes nunca usados) em cada rodada, para os graficos."""
+    rows = []
+    for r in team_history(s):
+        m = r["megazord"]
+        rows.append({"round": r["round"], "time": r["time"][11:16], "days": r["test_days"],
+                     "mz_pts": m.get("total pts", 0), "mz_trades": m.get("trades", 0), "mz_hit": m.get("acerto"),
+                     "promoted": sum(1 for t in r["traders"] if t.get("promoted")),
+                     "traders": [t.get("total pts", 0) for t in r["traders"]]})
+    return rows[-40:]
+
+
 def publish_progress(board, trs, rnd, s, phase, **extra):
     rows = []
     for t in trs:
@@ -182,15 +194,15 @@ def publish_progress(board, trs, rnd, s, phase, **extra):
     prog = sum(min(1, r["steps_done"] / max(r["steps_total"], 1)) for r in rows) / max(len(rows), 1)
     prev = board.index.get("team") or {}
     board.set_team({"round": rnd, "phase": phase, "round_progress": prog, "traders": rows,
-                    "last_eval": extra.get("last_eval", prev.get("last_eval"))})
+                    "last_eval": extra.get("last_eval", prev.get("last_eval")), "history": history_rows(s)})
 
 
 def mode_replay(s):
     trs, fns = champions(s)
-    _, _, test = split(load(s.simbolo))
+    _, _, test = splits(s)
     base = WinDayTradeEnv(test, s.env, random_days=False)
     board = Board("replay", "Megazord replay", {**s.env.to_dict()}, keep=10_000, data_dir=data_dir(s))
-    board.set_team({"static": team_card(trs)})
+    board.set_team({"static": team_card(trs), "history": history_rows(s)})
     days = range(max(0, len(base.days) - s.dias_teste_painel), len(base.days))
     print(f"os campeoes vao jogar {len(days)} pregoes de teste (nunca estudados)...")
     for k in days:
@@ -204,9 +216,13 @@ def mode_replay(s):
 
 
 def mode_ao_vivo(s):
-    if s.enviar_ordens:
-        raise SystemExit("ENVIAR_ORDENS = true ainda nao existe no Megazord v1 (so painel). Deixe false.")
     from winrl.live_team import MT5Feed, SimFeed, run_live
+    broker = None
+    if s.enviar_ordens:
+        if not s.conectar_mt5:
+            raise SystemExit("ENVIAR_ORDENS = true precisa de CONECTAR_MT5 = true.")
+        from winrl.broker import MT5Broker
+        broker = MT5Broker(s)   # recusa na hora se a conta nao for DEMO
     trs, fns = champions(s)
     if s.conectar_mt5:
         feed = MT5Feed(s.simbolo)
@@ -216,11 +232,14 @@ def mode_ao_vivo(s):
         # no simulado, o fechamento e o do proprio pregao reproduzido
         s.fechamento = df[df["time"].dt.date == feed.day]["time"].max().strftime("%H:%M")
     board = Board("ao_vivo", "Megazord ao vivo", {**s.env.to_dict()}, data_dir=data_dir(s))
-    board.set_team({"static": team_card(trs)})
+    board.set_team({"static": team_card(trs), "history": history_rows(s)})
     board.live_status(feed.label, "conectando...")
     try:
-        run_live(feed, fns, [t.name for t in trs], s, board)
+        run_live(feed, fns, [t.name for t in trs], s, board, broker=broker)
     except KeyboardInterrupt:
+        if broker and broker.position() != 0:
+            print("\nzerando a posicao antes de sair...")
+            broker.flatten("encerrado")
         print("\nparado.")
         return
     print("O painel continua aberto (Ctrl+C para sair).")

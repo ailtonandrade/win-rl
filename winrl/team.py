@@ -49,6 +49,14 @@ class Settings:
     dias_teste_painel: int = 60
     conectar_mt5: bool = False
     enviar_ordens: bool = False
+    perda_max_dia_rs: float = 300.0     # travas do envio de ordens (so conta demo)
+    max_ordens_dia: int = 60
+    stop_emergencia_pts: float = 400.0
+    zerar_antes_min: int = 10
+    desvio_max_pts: float = 50.0
+    validacao_frac: float = 0.20        # fatia da prova de cada trader (logo apos o estudo)
+    promocao_t_min: float = 1.0         # forca estatistica minima para promover (teste pareado dia a dia)
+    reset_aprendiz_apos: int = 3        # rodadas seguidas sem promocao: aprendiz recomeca do campeao
     velocidade_simulada: float = 2.0
     porta: int = 8765
     pasta_time: str = "team"
@@ -63,6 +71,12 @@ class Settings:
     def env(self) -> EnvConfig:
         return EnvConfig(feature_set=self.features, trade_penalty=self.penalidade,
                          min_hold=self.min_hold, max_hold=self.max_hold)
+
+
+def splits(s: "Settings"):
+    """Treino / validacao / teste por data, iguais para todo o Megazord (60% estudo, VALIDACAO_FRAC de prova, resto teste)."""
+    from .data import load, split
+    return split(load(s.simbolo), train=0.6, val=s.validacao_frac)
 
 
 def load_settings(path: Path = ROOT / "megazord.ini") -> Settings:

@@ -158,6 +158,7 @@ async function poll() {
     const idx = await getJSON('data/index.json');
     if (idx.updated === stamp) return;
     stamp = idx.updated; index = idx;
+    renderProvasTV();
     $('mode').textContent = { treino: 'TREINO', replay: 'REPLAY', ao_vivo: 'AO VIVO' }[idx.mode] || idx.mode;
     $('mode').className = 'badge ' + idx.mode;
     if (studyMode()) {
@@ -250,6 +251,8 @@ function build(names) {
   S.walkers = el('g', {}, svg);  // quem levanta pra beber agua anda por cima do resto
   S.fx = el('g', {}, svg);
   S.walk = null;
+  S.pvKey = null;
+  if (index) renderProvasTV();
 }
 
 // ------------------------------------------------------------- sala
@@ -289,7 +292,7 @@ function drawRoom(g) {
   S.tvScore = el('text', { x: 194, y: 82, 'font-size': 8, fill: '#e6edf3', 'text-anchor': 'end' }, tv);
   R(tv, 196, 86, 3, 2, '#2ee66b', { class: 'blinkled' });
   // janela panoramica: andar alto, cidade la embaixo
-  const WW = 248, WH = 80;
+  const WW = 150, WH = 80;
   const win = onWallY(g, 1.0, WALL - 8);
   R(win, -5, -5, WW + 10, WH + 10, '#3a3f4a');
   const cityClip = el('clipPath', { id: 'cityclip' }, win); R(cityClip, 0, 0, WW, WH, '#000');
@@ -345,6 +348,17 @@ function drawRoom(g) {
   el('polygon', { points: `140,0 155,0 125,${WH} 110,${WH}`, fill: '#fff', opacity: .05 }, win);
   for (let k = 1; k < 4; k++) R(win, k * WW / 4 - 1.5, 0, 3, WH, '#3a3f4a');
   R(win, -5, WH, WW + 10, 4, '#2b2f36');
+  // TV 2: historico das provas do time
+  const tv2 = onWallY(g, 5.95, WALL - 12);
+  R(tv2, -5, -5, 110, 86, '#1b1b1b'); R(tv2, -3, -3, 106, 82, '#333');
+  R(tv2, 0, 0, 100, 76, '#06121f');
+  for (let yy = 0; yy < 76; yy += 3) R(tv2, 0, yy, 100, 1, '#ffffff', { opacity: .03 });
+  el('text', { x: 4, y: 9, 'font-size': 5, fill: '#7fd4ff' }, tv2).textContent = 'PROVAS DO TIME';
+  S.pvSub = el('text', { x: 96, y: 9, 'font-size': 4, fill: '#8a96b3', 'text-anchor': 'end' }, tv2);
+  S.pvBars = el('g', {}, tv2);
+  S.pvLast = el('text', { x: 4, y: 72, 'font-size': 7, fill: '#e6edf3' }, tv2);
+  S.pvTrend = el('text', { x: 96, y: 72, 'font-size': 7, fill: '#8a96b3', 'text-anchor': 'end' }, tv2);
+  R(tv2, 96, 74, 3, 2, '#2ee66b', { class: 'blinkled' });
   // relogio (acima da estante)
   const clk = onWallY(g, 9.9, WALL - 20);
   el('circle', { cx: 12, cy: 12, r: 13, fill: '#fff', stroke: '#333', 'stroke-width': 2 }, clk);
@@ -630,7 +644,8 @@ function render() {
   const votes = nx ? nx.votes : st ? st.votes : { long: 0, short: 0 };
   const pos = st ? st.pos : 0;
 
-  $('clock').textContent = `${ep.day} ${bar[0]}`;
+  const bk = live() ? index.live?.broker : null;
+  $('clock').textContent = `${ep.day} ${bar[0]}` + (bk ? ` · MT5 ${bk.position > 0 ? 'COMPRADO' : bk.position < 0 ? 'VENDIDO' : 'ZERADO'} R$ ${sgn(bk.pnl_brl, 2)}${!bk.algo_trading ? ' ⚠ ALGO TRADING DESLIGADO' : bk.blocked ? ' ⛔ TRAVADO' : ''}` : '');
   const done = ep.trades.filter(t => t.exit_i <= k), pts = done.reduce((a, t) => a + t.pts, 0);
   $('score').textContent = sgn(pts); $('score-unit').textContent = 'pts';
   $('score').className = 'score ' + (pts > 0 ? 'good' : pts < 0 ? 'bad' : '');
@@ -689,6 +704,37 @@ function render() {
 
   events(k, st, done);
   leader(st);
+}
+
+// TV 2: barras com a prova do time de cada rodada (ultimas 10)
+function renderProvasTV() {
+  if (!S.pvBars) return;
+  const h = (index?.team?.history || []).slice(-10);
+  const key = JSON.stringify(h.map(r => [r.round, r.mz_pts]));
+  if (S.pvKey === key) return;
+  S.pvKey = key;
+  S.pvBars.innerHTML = '';
+  if (!h.length) {
+    S.pvSub.textContent = '';
+    S.pvLast.textContent = 'AGUARDANDO'; S.pvLast.setAttribute('fill', '#8a96b3');
+    S.pvTrend.textContent = '1A PROVA';
+    return;
+  }
+  const top = 14, bot = 60, mid = (top + bot) / 2, m = Math.max(1, ...h.map(r => Math.abs(r.mz_pts)));
+  R(S.pvBars, 4, mid, 92, .6, '#3a4452');
+  const bw = 88 / h.length;
+  h.forEach((r, i) => {
+    const hgt = Math.max(1, Math.abs(r.mz_pts) / m * (mid - top));
+    R(S.pvBars, 6 + i * bw, r.mz_pts >= 0 ? mid - hgt : mid, Math.max(2, bw - 2), hgt, r.mz_pts >= 0 ? '#2ee66b' : '#ff4d5e');
+    if (r.promoted) el('text', { x: 6 + i * bw + (bw - 2) / 2, y: top - 1, 'font-size': 4, 'text-anchor': 'middle', fill: '#ffd166' }, S.pvBars).textContent = '★';
+  });
+  const last = h.at(-1), prev = h.at(-2);
+  S.pvSub.textContent = `R${h[0].round}-R${last.round} · ${last.days} DIAS`;
+  S.pvLast.textContent = `${sgn(last.mz_pts)} PTS`;
+  S.pvLast.setAttribute('fill', last.mz_pts >= 0 ? '#2ee66b' : '#ff4d5e');
+  const d = prev ? last.mz_pts - prev.mz_pts : 0;
+  S.pvTrend.textContent = !prev ? '' : d > 0 ? '▲ SUBINDO' : d < 0 ? '▼ CAINDO' : '= IGUAL';
+  S.pvTrend.setAttribute('fill', d > 0 ? '#2ee66b' : d < 0 ? '#ff4d5e' : '#8a96b3');
 }
 
 // ciclo do dia: cor do ceu, sol/lua, estrelas, luzes da cidade e do escritorio
