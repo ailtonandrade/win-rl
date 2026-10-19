@@ -4,7 +4,7 @@ Agente de reinforcement learning para scalp/day trade no mini índice (WIN), 1 c
 Tudo aqui é **leitura de dados + simulação**. Nenhum script envia ordem ao MT5, e os
 scripts que conectam no MT5 abortam se a conta não for DEMO.
 
-## Megazord (o jeito principal de usar)
+## Emillion (o jeito principal de usar)
 
 1. Edite o **`megazord.ini`** (`MODO`, `CONECTAR_MT5` etc.).
 2. Rode o **`run.bat`**. O escritório abre no navegador (`http://localhost:8765/escritorio.html`), e o painel com gráficos fica em `/time.html`.
@@ -17,20 +17,20 @@ scripts que conectam no MT5 abortam se a conta não for DEMO.
 
 ### Ordens no MT5 (`ENVIAR_ORDENS = true`, demo por padrão)
 
-O Megazord manda ordens a mercado de 1 contrato no WIN vigente (ex.: `WINZ26`), seguindo a posição decidida pela votação, com as mesmas regras do treino. Para ligar: `MODO = ao_vivo`, `CONECTAR_MT5 = true`, `ENVIAR_ORDENS = true` e o botão **Algo Trading** do MT5 ligado.
+O Emillion manda ordens a mercado de 1 contrato no WIN vigente (ex.: `WINZ26`), seguindo a posição decidida pela votação, com as mesmas regras do treino. Para ligar: `MODO = ao_vivo`, `CONECTAR_MT5 = true`, `ENVIAR_ORDENS = true` e o botão **Algo Trading** do MT5 ligado.
 
 - Por padrão recusa qualquer conta que não seja **demo** (`winrl/broker.py`). Conta real só com duas travas: `PERMITIR_CONTA_REAL = true` no `megazord.ini` **e** digitar o número da conta na janela ao iniciar (a cada vez). As telas mostram "🔴 CONTA REAL".
 - Stop de emergência no servidor em cada entrada (`STOP_EMERGENCIA_PTS`).
 - Perda máxima do dia em R$ e número máximo de ordens: atingiu, zera e para de entrar.
 - Zera `ZERAR_ANTES_MIN` minutos antes do último candle e ao fechar com Ctrl+C.
 - Criar um arquivo chamado `PARAR` (sem extensão) na pasta do projeto zera e bloqueia novas entradas.
-- Nunca entra no meio de um trade que o Megazord começou antes de o programa ligar.
+- Nunca entra no meio de um trade que o Emillion começou antes de o programa ligar.
 - Cada ordem fica registrada em `logs\ordens_AAAA-MM-DD.csv`.
 - Teste rápido (compra 1 e zera): `.venv\Scripts\python scripts\teste_ordem.py`.
 
 Promoção: na prova de cada rodada, aprendiz e campeão jogam os mesmos pregões de validação e o resultado é comparado **dia a dia** (teste t pareado). O aprendiz só vira campeão se for melhor na média com `t >= PROMOCAO_T_MIN`. Cada trader estuda com uma taxa de aprendizado diferente e, depois de `RESET_APRENDIZ_APOS` rodadas sem promoção, o aprendiz recomeça do campeão com passos menores. O `history.json` de cada trader guarda o `t_stat`, os dias melhores e piores e se houve recomeço.
 
-Regra de votação: o Megazord **entra** quando `VOTOS_PARA_ENTRAR` traders querem a mesma direção, **mantém** enquanto pelo menos `VOTOS_PARA_MANTER` ainda querem, **vira a mão** se `VOTOS_PARA_ENTRAR` querem o lado oposto e, fora isso, zera. Cada trader também opera sua própria "conta-sombra", e é ela que aparece no ranking.
+Regra de votação: o Emillion **entra** quando `VOTOS_PARA_ENTRAR` traders querem a mesma direção, **mantém** enquanto pelo menos `VOTOS_PARA_MANTER` ainda querem, **vira a mão** se `VOTOS_PARA_ENTRAR` querem o lado oposto e, fora isso, zera. Cada trader também opera sua própria "conta-sombra", e é ela que aparece no ranking.
 
 Na primeira vez, se existirem os modelos `models/pen5y_WIN_N_s0..4`, o time nasce a partir deles; senão, começa do zero. Para recomeçar o time, apague a pasta `team/`.
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Escritorio Megazord</title>
+<title>Escritorio Emillion</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <style>
@@ -107,17 +107,17 @@
   .lrow .v { font-family: var(--pix); font-size: 10px; }
   .lrow.mz { border-top: 2px dashed var(--line); margin-top: 4px; padding-top: 6px; }
   .feed { padding: 10px; overflow: hidden; display: flex; flex-direction: column; }
-  .feed .list { overflow: hidden; display: flex; flex-direction: column; gap: 4px; }
+  .feed .list { overflow: hidden; display: flex; flex-direction: column; gap: 4px; contain: paint; }
   .ev { font-size: 17px; background: #0b1020; border-left: 4px solid var(--line); padding: 2px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ev.win { border-color: var(--good); } .ev.loss { border-color: var(--bad); } .ev.info { border-color: var(--gold); }
-  .ev.new { animation: slidein .4s; } @keyframes slidein { from { transform: translateX(30px); opacity: 0; } }
+  .ev.new { animation: fadein .5s; } @keyframes fadein { from { opacity: 0; } }
   @media (orientation: portrait), (max-width: 760px) { .side { grid-template-rows: auto auto; } .feed .list { max-height: 260px; } }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="box top">
-    <span class="title">🏢 ESCRITORIO MEGAZORD</span>
+    <span class="title">🏢 ESCRITORIO EMILLION</span>
     <span class="badge" id="mode">-</span>
     <span class="meta" id="clock">--</span>
     <span class="score" id="score">0</span><span class="meta" id="score-unit">pts</span>
@@ -536,7 +536,7 @@ function trader(g, x, y, j, name) {
            j, x, y, c, skin, hair };
 }
 
-// ------------------------------------------------------------- MEGAZORD: computador quantico
+// ------------------------------------------------------------- EMILLION: computador quantico
 function megazord(g, x, y) {
   const [rx, ry] = iso(x, y, 0);
   const root = el('g', {}, g);
@@ -587,7 +587,7 @@ function megazord(g, x, y) {
   // placa com o nome
   const [px, py] = iso(x0 + w / 2, y0 + d, 0);
   const tag = el('text', { x: px, y: py + 16, 'font-size': 7, 'text-anchor': 'middle', fill: '#7fd4ff', stroke: '#000', 'stroke-width': 2, 'paint-order': 'stroke' }, root);
-  tag.textContent = 'MEGAZORD Q-CORE';
+  tag.textContent = 'EMILLION Q-CORE';
   // balao
   const [hx, hy] = iso(x, y, H + 14);
   const bub = el('g', { transform: `translate(${hx},${hy - 14})` }, root);
@@ -645,13 +645,13 @@ function render() {
   const pos = st ? st.pos : 0;
 
   const bk = live() ? index.live?.broker : null;
-  $('clock').textContent = `${ep.day} ${bar[0]}` + (bk ? ` · ${bk.real ? '🔴 CONTA REAL ' : ''}MT5 ${bk.position > 0 ? 'COMPRADO' : bk.position < 0 ? 'VENDIDO' : 'ZERADO'} R$ ${sgn(bk.pnl_brl, 2)}${!bk.algo_trading ? ' ⚠ ALGO TRADING DESLIGADO' : bk.blocked ? ' ⛔ TRAVADO' : ''}` : '');
+  $('clock').textContent = `${ep.day} ${bar[0]}` + (bk ? ` · ${bk.real ? '🔴 CONTA REAL ' : ''}REAL MT5 ${bk.position > 0 ? 'COMPRADO' : bk.position < 0 ? 'VENDIDO' : 'ZERADO'} R$ ${sgn(bk.pnl_brl, 2)} hoje${!bk.algo_trading ? ' ⚠ ALGO TRADING DESLIGADO' : bk.blocked ? ' ⛔ TRAVADO' : ''}` : '');
   const done = ep.trades.filter(t => t.exit_i <= k), pts = done.reduce((a, t) => a + t.pts, 0);
-  $('score').textContent = sgn(pts); $('score-unit').textContent = 'pts';
+  $('score').textContent = sgn(pts); $('score-unit').textContent = live() ? 'pts simulados' : 'pts';
   $('score').className = 'score ' + (pts > 0 ? 'good' : pts < 0 ? 'bad' : '');
 
   // telao
-  S.tvTitle.textContent = 'MEGAZORD';
+  S.tvTitle.textContent = 'EMILLION';
   S.tvPrice.textContent = 'WIN ' + fmt(bar[4]);
   S.tvTime.textContent = bar[0];
   const seg = ep.bars.slice(Math.max(0, k - 90), k + 1).map(b => b[4]);
@@ -684,7 +684,7 @@ function render() {
     drawScreen(j, k, tr);
   });
 
-  // Megazord
+  // Emillion
   const Z = S.mz;
   Z.core.setAttribute('fill', pos > 0 ? '#3b8cff' : pos < 0 ? '#ff8a3d' : '#666');
   Z.bars.forEach((b, i) => {
@@ -788,10 +788,10 @@ function events(k, st, done) {
     for (const t of done.slice(prev.done)) {
       floatText(S.mz.head, `${sgn(t.pts)} PTS`, t.pts > 0 ? '#2ee66b' : '#ff4d5e', 11);
       if (t.pts > 0) { confetti(S.mz.head); victory(); }
-      feed(`MEGAZORD ${t.side > 0 ? 'comprou' : 'vendeu'} ${t.entry_time}→${t.exit_time}: ${sgn(t.pts)} pts`, t.pts > 0 ? 'win' : 'loss');
+      feed(`EMILLION ${t.side > 0 ? 'comprou' : 'vendeu'} ${t.entry_time}→${t.exit_time}: ${sgn(t.pts)} pts`, t.pts > 0 ? 'win' : 'loss');
     }
     if (st && prev.st && st.pos !== prev.st.pos && st.pos !== 0)
-      feed(`${ep.bars[k][0]} MEGAZORD ${st.pos > 0 ? 'ENTROU COMPRADO' : 'ENTROU VENDIDO'} (${st.pos > 0 ? st.votes.long : st.votes.short} votos)`, 'info');
+      feed(`${ep.bars[k][0]} EMILLION ${st.pos > 0 ? 'ENTROU COMPRADO' : 'ENTROU VENDIDO'} (${st.pos > 0 ? st.votes.long : st.votes.short} votos)`, 'info');
   }
   prev = { k, st, done: done.length };
 }
@@ -818,7 +818,7 @@ function confetti([x, y]) {
 function feed(txt, cls) {
   const d = document.createElement('div'); d.className = 'ev new ' + cls; d.textContent = txt;
   const list = $('feed'); list.prepend(d);
-  while (list.children.length > 30) list.lastChild.remove();
+  while (list.children.length > 20) list.lastChild.remove();
 }
 function leader(st) {
   document.querySelector('.lb h3').textContent = 'RANKING DO DIA';
@@ -827,7 +827,7 @@ function leader(st) {
   const rows = names.map((n, j) => ({ n, c: TC[j], v: st ? st.tr[j].pnl : 0 })).sort((a, b) => b.v - a.v);
   $('leader').innerHTML = rows.map((r, i) => `<div class="lrow"><span class="av" style="background:${r.c}"></span>
       <span>${i === 0 ? '👑 ' : ''}${r.n}</span><span class="v ${r.v > 0 ? 'good' : r.v < 0 ? 'bad' : ''}">${sgn(r.v)}</span></div>`).join('')
-    + `<div class="lrow mz"><span class="av" style="background:#ffd166"></span><span>MEGAZORD</span>
+    + `<div class="lrow mz"><span class="av" style="background:#ffd166"></span><span>EMILLION</span>
       <span class="v ${st?.cum_pnl > 0 ? 'good' : st?.cum_pnl < 0 ? 'bad' : ''}">${sgn(st ? st.cum_pnl : 0)}</span></div>`;
 }
 
@@ -906,7 +906,7 @@ function renderStudy() {
     const icon = tr.phase === 'pronto' ? (tr.promoted ? '\u{1F3C6}' : '✓') : ICON[tr.phase] || '\u{1F4A4}';
     return `<div class="lrow"><span class="av" style="background:${TC[j]}"></span><span>${icon} ${tr.name}</span>
       <span class="v">${tr.phase === 'estudando' ? Math.round(frac * 100) + '%' : tr.champion_pts_dia != null ? sgn(tr.champion_pts_dia) + '/d' : ''}</span></div>`;
-  }).join('') + `<div class="lrow mz"><span class="av" style="background:#ffd166"></span><span>MEGAZORD</span>
+  }).join('') + `<div class="lrow mz"><span class="av" style="background:#ffd166"></span><span>EMILLION</span>
       <span class="v">${le ? sgn(le.mz_pts) : '-'}</span></div>`;
   document.querySelector('.lb h3').textContent = `RODADA ${tm.round} · ESTUDO`;
 }
@@ -942,7 +942,6 @@ function startWalk(a) {
   const sp = walkerSprite(a);
   a.seat.setAttribute('opacity', 0);
   S.walk = { a, sp, path: path.concat([...path].reverse().slice(1)), seg: 0, t: 0, drink: 0, last: performance.now(), drank: false };
-  feed(`${S.names[a.j]} foi beber agua 💧`, 'info');
 }
 function stepWalk(now) {
   const w = S.walk; if (!w) return;

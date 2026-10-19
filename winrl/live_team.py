@@ -1,4 +1,4 @@
-"""Modo AO VIVO do Megazord: o time olha cada candle de M1 assim que ele fecha e vota.
+"""Modo AO VIVO do Emillion: o time olha cada candle de M1 assim que ele fecha e vota.
 
 Paper trading: as "ordens" sao simuladas com as mesmas regras e custos do treino
 (decide no fechamento, executa na abertura do candle seguinte). Nada e enviado ao MT5.
@@ -49,7 +49,7 @@ class MT5Feed:
             raise SystemExit(f"Nao conectou no MT5: {mt5.last_error()} (o terminal esta aberto e logado?)")
         acc = mt5.account_info()
         if acc is None or (acc.trade_mode != 0 and not allow_real):
-            raise SystemExit("O MT5 nao esta numa conta DEMO. Por padrao o Megazord so roda em conta demo "
+            raise SystemExit("O MT5 nao esta numa conta DEMO. Por padrao o Emillion so roda em conta demo "
                              "(PERMITIR_CONTA_REAL no megazord.ini muda isso).")
         if not mt5.symbol_select(symbol, True):
             raise SystemExit(f"Simbolo {symbol} nao encontrado no MT5")
@@ -108,7 +108,7 @@ class MT5Feed:
 
 # ----------------------------------------------------------------------------- estado de cada conta
 class Book:
-    """Posicao de uma conta (trader-sombra ou Megazord) entre um candle e outro."""
+    """Posicao de uma conta (trader-sombra ou Emillion) entre um candle e outro."""
 
     def __init__(self):
         self.pos, self.entry, self.entry_time, self.bars_in_pos, self.cur = 0, 0.0, None, 0, None
@@ -161,7 +161,7 @@ class LiveTeam:
         return self.rec.episode(envs[-1], envs[:-1], last)
 
     def real_target(self, last_time) -> int:
-        """Posicao que a conta real deve ter na abertura do proximo candle: a decisao do Megazord
+        """Posicao que a conta real deve ter na abertura do proximo candle: a decisao do Emillion
         com as mesmas regras do treino (tempo minimo/maximo, sem entrar perto do fim) e zerando
         ZERAR_ANTES_MIN antes do ultimo candle (a corretora nao deixa passar do pregao)."""
         b = self.books[-1] if self.day is not None else None
@@ -216,7 +216,7 @@ class LiveTeam:
 
 def run_live(feed, fns, names, s: Settings, board, poll=1.0, broker=None):
     """Loop principal do modo ao vivo. Publica o dia no painel a cada candle novo.
-    Com `broker` (ENVIAR_ORDENS = true, so conta demo) a posicao do Megazord vira ordem no MT5."""
+    Com `broker` (ENVIAR_ORDENS = true, so conta demo) a posicao do Emillion vira ordem no MT5."""
     team = LiveTeam(fns, names, s)
     print(feed.label)
     if broker:
@@ -237,7 +237,7 @@ def run_live(feed, fns, names, s: Settings, board, poll=1.0, broker=None):
                 target = team.real_target(df["time"].iloc[-1])
                 paper = team.books[-1].pos
                 if broker.position() == 0 and paper != 0 and target == paper:
-                    target = 0  # o trade do Megazord comecou antes (ex.: na recuperacao da manha): nao entra no meio
+                    target = 0  # o trade do Emillion comecou antes (ex.: na recuperacao da manha): nao entra no meio
                 broker.sync(target, f"C{votes.get('long', 0)} V{votes.get('short', 0)}")
             elif team.closed_day or broker._guards():
                 broker.sync(0, "fim do dia" if team.closed_day else "trava")
@@ -254,7 +254,7 @@ def run_live(feed, fns, names, s: Settings, board, poll=1.0, broker=None):
             last_status = time.time()
             board.live_status(feed.label, "aguardando candle novo (mercado fechado?)" if df is None or df.empty or team.closed_day
                               else "aguardando o proximo candle fechar")
-        # preco segundo a segundo para as telas (o Megazord continua decidindo so no fechamento do minuto)
+        # preco segundo a segundo para as telas (o Emillion continua decidindo so no fechamento do minuto)
         if hasattr(feed, "forming"):
             f = feed.forming()
             if f:

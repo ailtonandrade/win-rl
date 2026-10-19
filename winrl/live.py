@@ -131,7 +131,7 @@ class Board:
         self.save()
 
     def set_team(self, info: dict):
-        """Status do time (progresso de cada trader, historico das rodadas) para o painel do Megazord."""
+        """Status do time (progresso de cada trader, historico das rodadas) para o painel do Emillion."""
         self.index["team"] = info
         self.save()
 

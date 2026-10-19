@@ -1,10 +1,10 @@
-"""Envio de ordens do Megazord para o MT5. Por padrao SO FUNCIONA EM CONTA DEMO.
+"""Envio de ordens do Emillion para o MT5. Por padrao SO FUNCIONA EM CONTA DEMO.
 
 Conta real so com as duas travas: PERMITIR_CONTA_REAL = true no megazord.ini E digitar o
 numero da conta na janela ao iniciar (cada vez que o programa abre).
 
-O Megazord decide uma posicao-alvo (-1, 0, +1 contrato). O broker compara com a posicao
-real no MT5 (so as ordens com o MAGIC do Megazord) e manda uma ordem a mercado com a
+O Emillion decide uma posicao-alvo (-1, 0, +1 contrato). O broker compara com a posicao
+real no MT5 (so as ordens com o MAGIC do Emillion) e manda uma ordem a mercado com a
 diferenca. Conta netting (padrao B3): vender 2 com 1 comprado vira 1 vendido.
 
 Travas:
@@ -31,10 +31,10 @@ class BrokerError(SystemExit):
 def confirm_real_account(acc, s):
     """Segunda trava da conta real: so passa se PERMITIR_CONTA_REAL = true e o numero da conta for digitado."""
     if not getattr(s, "permitir_conta_real", False):
-        raise BrokerError("CONTA NAO E DEMO. Por padrao o Megazord so envia ordens em conta demo. Nada foi enviado.\n"
+        raise BrokerError("CONTA NAO E DEMO. Por padrao o Emillion so envia ordens em conta demo. Nada foi enviado.\n"
                           "(Para conta real: PERMITIR_CONTA_REAL = true no megazord.ini e confirmar ao iniciar.)")
     print("\n" + "!" * 70)
-    print("  ATENCAO: CONTA REAL. As ordens do Megazord vao usar DINHEIRO DE VERDADE.")
+    print("  ATENCAO: CONTA REAL. As ordens do Emillion vao usar DINHEIRO DE VERDADE.")
     print(f"  conta {acc.login} | servidor {acc.server} | {acc.company} | saldo {acc.balance:,.2f} {acc.currency}")
     print(f"  travas: perda max R$ {s.perda_max_dia_rs:.0f}/dia, {s.max_ordens_dia} ordens/dia, stop {s.stop_emergencia_pts:.0f} pts, 1 contrato")
     print("!" * 70)
@@ -148,7 +148,7 @@ class MT5Broker:
         req = {
             "action": mt5.TRADE_ACTION_DEAL, "symbol": self.symbol, "volume": float(abs(delta)),
             "type": mt5.ORDER_TYPE_BUY if buy else mt5.ORDER_TYPE_SELL, "price": price,
-            "deviation": int(self.s.desvio_max_pts), "magic": MAGIC, "comment": f"megazord {reason}"[:31],
+            "deviation": int(self.s.desvio_max_pts), "magic": MAGIC, "comment": f"emillion {reason}"[:31],
             "type_time": mt5.ORDER_TIME_DAY, "type_filling": self.filling,
         }
         opening = target != 0

@@ -1,4 +1,4 @@
-"""O time fixo de traders e o Megazord (votacao).
+"""O time fixo de traders e o Emillion (votacao).
 
 team/
   team.json                  historico das rodadas do time
@@ -8,7 +8,7 @@ team/
     history.json             uma linha por rodada (passos, nota do aprendiz, nota do campeao, promovido?)
     progress.json            andamento da rodada atual (para o painel)
 
-Cada trader aprende sozinho. O Megazord nao aprende: ele so junta os votos dos campeoes.
+Cada trader aprende sozinho. O Emillion nao aprende: ele so junta os votos dos campeoes.
 """
 import configparser
 import copy
@@ -75,7 +75,7 @@ class Settings:
 
 
 def splits(s: "Settings"):
-    """Treino / validacao / teste por data, iguais para todo o Megazord (60% estudo, VALIDACAO_FRAC de prova, resto teste)."""
+    """Treino / validacao / teste por data, iguais para todo o Emillion (60% estudo, VALIDACAO_FRAC de prova, resto teste)."""
     from .data import load, split
     return split(load(s.simbolo), train=0.6, val=s.validacao_frac)
 
@@ -157,7 +157,7 @@ def seed_team(s: Settings, sources: list[Path]) -> list[str]:
 
 # ----------------------------------------------------------------------------- votacao
 def megazord_action(wants: list[int], mz_pos: int, enter: int, hold: int) -> int:
-    """wants: posicao desejada de cada trader (-1, 0, +1). Devolve a acao do Megazord (0, 1, 2).
+    """wants: posicao desejada de cada trader (-1, 0, +1). Devolve a acao do Emillion (0, 1, 2).
     - zerado: entra se >= enter quiserem a mesma direcao;
     - posicionado: vira a mao se >= enter quiserem o lado oposto; mantem se >= hold ainda quiserem
       o mesmo lado; senao zera."""
@@ -272,7 +272,7 @@ class TeamRecorder:
 
 def play_day(base: WinDayTradeEnv, fns, names, s: Settings, day_index: int, record=True):
     """O time inteiro joga um pregao do historico. Cada trader opera a propria conta-sombra;
-    o Megazord opera a conta dele com a votacao. Devolve (episodio ou None, envs)."""
+    o Emillion opera a conta dele com a votacao. Devolve (episodio ou None, envs)."""
     envs = [clone_env(base) for _ in range(len(fns) + 1)]
     for e in envs:
         e.random_days, e._next_day = False, day_index
@@ -294,7 +294,7 @@ def play_day(base: WinDayTradeEnv, fns, names, s: Settings, day_index: int, reco
 
 
 def play_days(base: WinDayTradeEnv, fns, names, s: Settings, days=None):
-    """Joga varios pregoes sem gravar detalhes. Devolve Result do Megazord e de cada trader."""
+    """Joga varios pregoes sem gravar detalhes. Devolve Result do Emillion e de cada trader."""
     days = range(len(base.days)) if days is None else days
     mz_trades, tr_trades = [], [[] for _ in fns]
     for k in days:

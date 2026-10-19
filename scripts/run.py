@@ -1,4 +1,4 @@
-"""Megazord: le o megazord.ini e roda o modo escolhido. Chamado pelo run.bat.
+"""Emillion: le o megazord.ini e roda o modo escolhido. Chamado pelo run.bat.
 
 MODO = treino   -> os traders do time continuam estudando, rodada apos rodada (Ctrl+C para parar)
 MODO = replay   -> os campeoes jogam os ultimos pregoes do historico, para assistir
@@ -113,7 +113,7 @@ def update_data(s):
 # ----------------------------------------------------------------------------- modos
 def mode_treino(s):
     trs = ensure_team(s, need_champions=False)
-    board = Board("treino", "Megazord treinando", {**s.env.to_dict(), "traders": s.traders}, data_dir=data_dir(s))
+    board = Board("treino", "Emillion treinando", {**s.env.to_dict(), "traders": s.traders}, data_dir=data_dir(s))
     hist = team_history(s)
     rnd = (hist[-1]["round"] + 1) if hist else 1
     done_rounds = 0
@@ -142,20 +142,20 @@ def mode_treino(s):
             raise SystemExit(f"falhou: {failed}. Veja logs/team_r{rnd}_<nome>.log")
         publish_progress(board, trs, rnd, s, "prova do time")
 
-        # prova do time: campeoes + Megazord nos ultimos pregoes de teste (nunca estudados)
+        # prova do time: campeoes + Emillion nos ultimos pregoes de teste (nunca estudados)
         _, fns = champions(s)
         _, _, test = splits(s)
         base = WinDayTradeEnv(test, s.env, random_days=False)
         days = list(range(max(0, len(base.days) - s.dias_teste_painel), len(base.days)))
         mz, ind = play_days(base, fns, [t.name for t in trs], s, days)
-        ms = mz.summary("MEGAZORD")
+        ms = mz.summary("EMILLION")
         row = {"round": rnd, "time": time.strftime("%Y-%m-%d %H:%M"), "test_days": len(days),
                "megazord": ms, "traders": [{"name": t.name, **r.summary(t.name),
                                             "promoted": t.history[-1]["promoted"] if t.history else None}
                                            for t, r in zip(trs, ind)]}
         (s.team_dir / "team.json").write_text(json.dumps(hist + [row], indent=1, default=str))
         hist.append(row)
-        print(f"rodada {rnd}: MEGAZORD {ms.get('total pts', 0):+} pts em {len(days)} pregoes ({ms.get('trades', 0)} trades)")
+        print(f"rodada {rnd}: EMILLION {ms.get('total pts', 0):+} pts em {len(days)} pregoes ({ms.get('trades', 0)} trades)")
         for t, r in zip(trs, ind):
             h = t.history[-1]
             print(f"  {t.name:8} {'PROMOVIDO' if h['promoted'] else 'mantido  '} validacao {h['learner']['pts_dia']:+.1f} pts/dia"
@@ -201,14 +201,14 @@ def mode_replay(s):
     trs, fns = champions(s)
     _, _, test = splits(s)
     base = WinDayTradeEnv(test, s.env, random_days=False)
-    board = Board("replay", "Megazord replay", {**s.env.to_dict()}, keep=10_000, data_dir=data_dir(s))
+    board = Board("replay", "Emillion replay", {**s.env.to_dict()}, keep=10_000, data_dir=data_dir(s))
     board.set_team({"static": team_card(trs), "history": history_rows(s)})
     days = range(max(0, len(base.days) - s.dias_teste_painel), len(base.days))
     print(f"os campeoes vao jogar {len(days)} pregoes de teste (nunca estudados)...")
     for k in days:
         ep, _ = play_day(base, fns, [t.name for t in trs], s, k)
         board.add_episode(ep)
-        print(f"  {ep['day']}: MEGAZORD {ep['summary']['trades']} trades {ep['summary']['pnl_pts']:+.0f} pts | "
+        print(f"  {ep['day']}: EMILLION {ep['summary']['trades']} trades {ep['summary']['pnl_pts']:+.0f} pts | "
               + " ".join(f"{x['name']} {x['pnl_pts']:+.0f}" for x in ep['summary']['traders']))
     print("pronto. O painel continua aberto (Ctrl+C para sair).")
     while True:
@@ -231,7 +231,7 @@ def mode_ao_vivo(s):
         feed = SimFeed(df, s.velocidade_simulada)
         # no simulado, o fechamento e o do proprio pregao reproduzido
         s.fechamento = df[df["time"].dt.date == feed.day]["time"].max().strftime("%H:%M")
-    board = Board("ao_vivo", "Megazord ao vivo", {**s.env.to_dict()}, data_dir=data_dir(s))
+    board = Board("ao_vivo", "Emillion ao vivo", {**s.env.to_dict()}, data_dir=data_dir(s))
     board.set_team({"static": team_card(trs), "history": history_rows(s)})
     board.live_status(feed.label, "conectando...")
     try:
@@ -252,7 +252,7 @@ if __name__ == "__main__":
         INI = str(Path(sys.argv[1]).resolve())
     s = load_settings(Path(INI))
     (ROOT / "logs").mkdir(exist_ok=True)
-    print(f"MEGAZORD | modo {s.modo} | {s.traders} traders | entra com {s.votos_para_entrar}, mantem com {s.votos_para_manter}"
+    print(f"EMILLION | modo {s.modo} | {s.traders} traders | entra com {s.votos_para_entrar}, mantem com {s.votos_para_manter}"
           f" | CONECTAR_MT5={s.conectar_mt5} ENVIAR_ORDENS={s.enviar_ordens}")
     start_dashboard(s.porta, s.abrir_navegador, s.pagina, data_dir(s))
     try:

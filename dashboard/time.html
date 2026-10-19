@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Megazord WIN</title>
+<title>Emillion WIN</title>
 <script src="plotly.min.js"></script>
 <style>
   :root {
@@ -171,12 +171,12 @@
 <div class="app">
   <div class="card hud">
     <div class="brand">
-      <div class="t">🤖 <b>MEGAZORD</b> WIN</div>
+      <div class="t">🤖 <b>EMILLION</b> WIN</div>
       <div class="s"><span id="mode" class="badge"></span><span id="sub"></span></div>
       <div class="xp"><div id="xp" style="width:0"></div></div>
     </div>
     <div class="score">
-      <div class="lbl">PLACAR DO MEGAZORD</div>
+      <div class="lbl" id="score-lbl">PLACAR DO EMILLION</div>
       <div class="v num" id="score">0</div>
       <div class="brl" id="score-brl">R$ 0,00 · aberto 0</div>
     </div>
@@ -202,7 +202,7 @@
   </div>
 
   <div class="card chartcard">
-    <h2 id="chart-title">Mini indice M1 · entradas e saidas do Megazord</h2>
+    <h2 id="chart-title">Mini indice M1 · entradas e saidas do Emillion</h2>
     <div class="clock" id="clock"></div>
     <div class="plot" id="chart"></div>
     <div class="toasts" id="toasts"></div>
@@ -213,7 +213,7 @@
   <div class="side">
     <div class="card mz" id="mzcard">
       <div class="top">
-        <div><div class="who">MEGAZORD</div><div class="posname flat" id="pos">ZERADO</div></div>
+        <div><div class="who">EMILLION</div><div class="posname flat" id="pos">ZERADO</div></div>
         <div class="price"><div class="v" id="now-price">-</div><div class="t" id="now-time">--:--</div></div>
       </div>
       <div class="mzline">
@@ -234,7 +234,7 @@
   </div>
 
   <div class="bottom">
-    <div class="card" id="chipscard"><h2>Trades do Megazord (mais recente primeiro)</h2><div class="chips" id="chips"></div></div>
+    <div class="card" id="chipscard"><h2>Trades do Emillion (mais recente primeiro)</h2><div class="chips" id="chips"></div></div>
     <div class="card"><h2 id="board-title">Placar do dia por trader</h2><div class="rows" id="leader"></div></div>
     <div class="card"><h2 id="provas-title">Provas do time</h2><div class="plot" id="provas" style="inset:24px 4px 4px"></div></div>
     <div class="card"><h2 id="team-title">Time</h2><div class="rows" id="teampanel"></div><div class="plot" id="learn" style="inset:24px 4px 4px;display:none"></div></div>
@@ -310,7 +310,7 @@ function renderXP() {
   } else if (live()) {
     const bk = index.live?.broker;
     $('sub').textContent = bk
-      ? `${bk.real ? '🔴 CONTA REAL · ' : ''}MT5 ${bk.symbol}: ${bk.position > 0 ? 'COMPRADO' : bk.position < 0 ? 'VENDIDO' : 'ZERADO'} · dia R$ ${sgn(bk.pnl_brl, 2)} · ${bk.orders_today} ordens`
+      ? `${bk.real ? '🔴 CONTA REAL · ' : ''}REAL MT5 ${bk.symbol}: ${bk.position > 0 ? 'COMPRADO' : bk.position < 0 ? 'VENDIDO' : 'ZERADO'} · hoje R$ ${sgn(bk.pnl_brl, 2)} · ${bk.orders_today} ordens`
         + (!bk.algo_trading ? ' · ⚠ LIGUE O ALGO TRADING' : bk.blocked ? ` · ⛔ ${bk.blocked}` : bk.last ? ` · ultima: ${bk.last.side || ''} ${bk.last.msg}` : '')
       : (index.live?.source || '');
     $('xp').style.width = ep ? Math.min(100, 100 * ep.bars.length / 565) + '%' : '0';
@@ -331,7 +331,7 @@ async function loadEpisode(id, keepPos) {
   $('episode').value = id;
   $('scrub').max = ep.bars.length - 1;
   if (fresh) { lastDone = 0; lastPos = 0; lastK = -1; shownScore = 0; $('chips').innerHTML = ''; buildCouncil(); Plotly.purge('chart'); }
-  // o painel de trades do Megazord so aparece se ele operou nesse pregao (decidido pelo dia inteiro, sem pulos)
+  // o painel de trades do Emillion so aparece se ele operou nesse pregao (decidido pelo dia inteiro, sem pulos)
   const bottom = document.querySelector('.bottom'), noChips = !ep.trades.length;
   if (bottom.classList.contains('nochips') !== noChips) { bottom.classList.toggle('nochips', noChips); requestAnimationFrame(() => window.dispatchEvent(new Event('resize'))); }
   if (live() && $('follow').checked) p = ep.bars.length - 1;
@@ -384,7 +384,7 @@ function draw(full) {
   for (const t of done) shapes.push({ type: 'line', x0: t.entry_i, x1: t.exit_i, y0: t.entry, y1: t.exit, xref: 'x', yref: 'y', line: { color: t.pts > 0 ? C.good : C.bad, width: 2 } });
   traces.push({ type: 'scatter', mode: 'markers', x: done.map(t => t.entry_i), y: done.map(t => t.entry), xaxis: 'x', yaxis: 'y',
       marker: { symbol: done.map(t => t.side > 0 ? 'triangle-up' : 'triangle-down'), size: 11, color: done.map(t => t.side > 0 ? C.long : C.short), line: { width: 1, color: '#000' } },
-      text: done.map(t => `MEGAZORD ${t.side > 0 ? 'COMPRA' : 'VENDE'} ${t.entry_time} @ ${fmt(t.entry)}`), hoverinfo: 'text' },
+      text: done.map(t => `EMILLION ${t.side > 0 ? 'COMPRA' : 'VENDE'} ${t.entry_time} @ ${fmt(t.entry)}`), hoverinfo: 'text' },
     { type: 'scatter', mode: 'markers', x: done.map(t => t.exit_i), y: done.map(t => t.exit), xaxis: 'x', yaxis: 'y',
       marker: { symbol: 'x', size: 9, color: done.map(t => t.pts > 0 ? C.good : C.bad) },
       text: done.map(t => `SAIDA ${t.exit_time} @ ${fmt(t.exit)} (${t.reason}) ${sgn(t.pts)} pts`), hoverinfo: 'text' });
@@ -394,7 +394,7 @@ function draw(full) {
     shapes.push({ type: 'line', x0: st.entry_i, x1: total, y0: st.entry, y1: st.entry, xref: 'x', yref: 'y', line: { color: st.pos > 0 ? C.long : C.short, dash: 'dash', width: 1.5 } });
     traces.push({ type: 'scatter', mode: 'markers', x: [st.entry_i], y: [st.entry], xaxis: 'x', yaxis: 'y', hoverinfo: 'skip',
       marker: { symbol: st.pos > 0 ? 'triangle-up' : 'triangle-down', size: 16, color: st.pos > 0 ? C.long : C.short, line: { width: 1.5, color: '#fff' } } });
-    ann.push({ x: 0, xref: 'paper', xanchor: 'left', y: st.entry, yref: 'y', showarrow: false, text: `<b>MEGAZORD ${posName(st.pos)}</b> ${fmt(st.entry)}`, bgcolor: st.pos > 0 ? C.long : C.short, font: { color: '#fff', size: 11 } });
+    ann.push({ x: 0, xref: 'paper', xanchor: 'left', y: st.entry, yref: 'y', showarrow: false, text: `<b>EMILLION ${posName(st.pos)}</b> ${fmt(st.entry)}`, bgcolor: st.pos > 0 ? C.long : C.short, font: { color: '#fff', size: 11 } });
     if (cfg.max_hold) shapes.push({ type: 'line', x0: st.entry_i + cfg.max_hold, x1: st.entry_i + cfg.max_hold, y0: 0, y1: 1, yref: 'paper', xref: 'x', line: { color: C.warn, dash: 'dot', width: 1.5 } });
   }
   const lastBar = vb[vb.length - 1], last = lastBar[4];
@@ -408,7 +408,7 @@ function draw(full) {
     { type: 'bar', x: sx, y: steps.map(s => s.votes.long), marker: { color: steps.map(s => s.votes.long >= E ? C.long : 'rgba(59,140,255,.35)') }, xaxis: 'x', yaxis: 'y2', hovertemplate: 'compra %{y}<extra></extra>' },
     { type: 'bar', x: sx, y: steps.map(s => -s.votes.short), marker: { color: steps.map(s => s.votes.short >= E ? C.short : 'rgba(255,138,61,.35)') }, xaxis: 'x', yaxis: 'y2', hovertemplate: 'vende %{customdata}<extra></extra>', customdata: steps.map(s => s.votes.short) });
   ep.team.names.forEach((nm, j) => traces.push({ type: 'scatter', x: sx, y: steps.map(s => s.tr[j].pnl), mode: 'lines', line: { color: TC[j], width: 1 }, opacity: .7, xaxis: 'x', yaxis: 'y3', hovertemplate: nm + ' %{y:.0f}<extra></extra>' }));
-  traces.push({ type: 'scatter', x: sx, y: steps.map(s => s.cum_pnl), mode: 'lines', line: { color: C.gold, width: 3 }, xaxis: 'x', yaxis: 'y3', hovertemplate: 'MEGAZORD %{y:.0f}<extra></extra>' });
+  traces.push({ type: 'scatter', x: sx, y: steps.map(s => s.cum_pnl), mode: 'lines', line: { color: C.gold, width: 3 }, xaxis: 'x', yaxis: 'y3', hovertemplate: 'EMILLION %{y:.0f}<extra></extra>' });
   const N = ep.team.names.length, tickvals = [], ticktext = [];
   for (let i = 0; i < n; i += 60) { tickvals.push(i); ticktext.push(ep.bars[i][0]); }
   const layout = { ...baseLayout, shapes: shapes.concat([
@@ -476,6 +476,7 @@ function renderPanels(k, st, done) {
   const pts = done.reduce((a, t) => a + t.pts, 0), wins = done.filter(t => t.pts > 0).length;
   const openNet = st && st.pos ? st.unreal - 2 * cps : 0;
   scoreTarget = pts;
+  $('score-lbl').textContent = live() ? 'EMILLION SIMULADO (DESDE 09:00)' : 'PLACAR DO EMILLION';
   $('score-brl').textContent = `R$ ${sgn(pts * pv, 2)} · aberto ${sgn(openNet)}`;
   $('st-trades').textContent = done.length;
   const wr = done.length ? Math.round(100 * wins / done.length) : 0;
@@ -510,7 +511,7 @@ function tickScore() {
 
 function renderChips(done, fresh) {
   const box = $('chips');
-  if (!done.length) { box.innerHTML = '<div class="empty">o Megazord ainda nao fechou nenhum trade hoje</div>'; return; }
+  if (!done.length) { box.innerHTML = '<div class="empty">o Emillion ainda nao fechou nenhum trade hoje</div>'; return; }
   box.innerHTML = done.slice().reverse().slice(0, 40).map((t, j) => `
     <div class="chip ${t.pts > 0 ? 'win' : 'loss'} ${j < fresh ? 'new' : ''}">
       <span class="dir" style="color:${t.side > 0 ? C.long : C.short}">${t.side > 0 ? '▲' : '▼'}</span>
@@ -523,14 +524,14 @@ function renderChips(done, fresh) {
 function toast(t) {
   const el = document.createElement('div'), win = t.pts > 0;
   el.className = 'toast'; el.style.color = win ? C.good : C.bad;
-  el.innerHTML = `${sgn(t.pts)} pts${Math.abs(t.pts) >= 200 ? (win ? ' 🚀' : ' 💥') : ''}<small>MEGAZORD ${t.side > 0 ? 'compra' : 'venda'} · ${REASON[t.reason] || ''} ${t.reason}</small>`;
+  el.innerHTML = `${sgn(t.pts)} pts${Math.abs(t.pts) >= 200 ? (win ? ' 🚀' : ' 💥') : ''}<small>EMILLION ${t.side > 0 ? 'compra' : 'venda'} · ${REASON[t.reason] || ''} ${t.reason}</small>`;
   $('toasts').appendChild(el); setTimeout(() => el.remove(), 1700);
 }
 
 function renderLeader(st) {
   const names = ep.team.names;
   const rows = names.map((n, j) => ({ n, c: TC[j], v: st ? st.tr[j].pnl : 0 }));
-  rows.push({ n: 'MEGAZORD', c: C.gold, v: st ? st.cum_pnl : 0, mz: true });
+  rows.push({ n: 'EMILLION', c: C.gold, v: st ? st.cum_pnl : 0, mz: true });
   rows.sort((a, b) => b.v - a.v);
   const m = Math.max(200, ...rows.map(r => Math.abs(r.v)));
   $('leader').innerHTML = rows.map((r, j) => {
@@ -542,7 +543,7 @@ function renderLeader(st) {
 }
 
 // ---------------------------------------------------------------- painel do time (treino / historico)
-// prova do time em cada rodada: Megazord (barras) e media dos traders (linha), sempre nos mesmos pregoes de teste
+// prova do time em cada rodada: Emillion (barras) e media dos traders (linha), sempre nos mesmos pregoes de teste
 let provasStamp = '';
 function renderProvas() {
   const h = index.team?.history || [];
@@ -563,7 +564,7 @@ function renderProvas() {
   Plotly.react('provas', [
     { type: 'bar', x, y: h.map(r => r.mz_pts), marker: { color: h.map(r => r.mz_pts >= 0 ? C.good : C.bad) },
       customdata: h.map(r => [r.mz_trades, r.mz_hit, r.promoted, r.time]),
-      hovertemplate: '%{x} (%{customdata[3]})<br>MEGAZORD %{y:.0f} pts · %{customdata[0]} trades · acerto %{customdata[1]}<br>promovidos na rodada: %{customdata[2]}<extra></extra>' },
+      hovertemplate: '%{x} (%{customdata[3]})<br>EMILLION %{y:.0f} pts · %{customdata[0]} trades · acerto %{customdata[1]}<br>promovidos na rodada: %{customdata[2]}<extra></extra>' },
     { type: 'scatter', x, y: avg, mode: 'lines+markers', line: { color: C.muted, width: 1.5, dash: 'dot' }, marker: { size: 4 },
       hovertemplate: 'media dos traders %{y:.0f} pts<extra></extra>' },
     { type: 'scatter', x: h.filter(r => r.promoted).map(r => 'R' + r.round), y: h.filter(r => r.promoted).map(r => r.mz_pts), mode: 'text',
@@ -586,7 +587,7 @@ function renderTeam() {
         <div class="bar"><div style="left:0;width:${prog * 100}%;background:${TC[j]}"></div></div>
         <span class="v" style="font-weight:600">${ph} ${tr.champion_pts_dia != null ? sgn(tr.champion_pts_dia) + '/d' : ''}</span></div>`;
     }).join('') + `<div class="row" style="grid-template-columns:1fr;color:var(--muted);font-size:11px;margin-top:2px">
-      ${t.last_eval ? `ultima prova do time (${t.last_eval.days} pregoes nunca vistos): Megazord ${sgn(t.last_eval.mz_pts)} pts · ${t.last_eval.mz_trades} trades` : 'cada trader estuda, faz prova na validacao e so vota se for melhor que a versao anterior'}</div>`;
+      ${t.last_eval ? `ultima prova do time (${t.last_eval.days} pregoes nunca vistos): Emillion ${sgn(t.last_eval.mz_pts)} pts · ${t.last_eval.mz_trades} trades` : 'cada trader estuda, faz prova na validacao e so vota se for melhor que a versao anterior'}</div>`;
     return;
   }
   // ao vivo: ficha do time (o placar do dia ja esta no painel do meio)
@@ -603,7 +604,7 @@ function renderTeam() {
   if (!eps.length || !eps[0].traders) { box.innerHTML = ''; return; }
   const names = eps[0].traders.map(x => x.name);
   const tot = names.map((n, j) => ({ n, c: TC[j], v: eps.reduce((a, e) => a + (e.traders?.[j]?.pnl_pts || 0), 0) }));
-  tot.push({ n: 'MEGAZORD', c: C.gold, v: eps.reduce((a, e) => a + e.pnl_pts, 0), mz: true });
+  tot.push({ n: 'EMILLION', c: C.gold, v: eps.reduce((a, e) => a + e.pnl_pts, 0), mz: true });
   tot.sort((a, b) => b.v - a.v);
   const m = Math.max(200, ...tot.map(r => Math.abs(r.v)));
   $('team-title').textContent = live() ? 'Placar de hoje (ao vivo)' : `Placar acumulado · ${eps.length} pregoes`;
