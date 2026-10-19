@@ -68,7 +68,7 @@
   @keyframes throb { to { transform: scale(1.25); } }
   .steam { animation: steam 2.2s ease-out infinite; } .steam.s2 { animation-delay: 1.1s; }
   @keyframes steam { 0% { opacity: 0; transform: translateY(0); } 30% { opacity: .7; } 100% { opacity: 0; transform: translateY(-10px); } }
-  .pop { animation: pop .35s ease-out; transform-origin: 50% 100%; }
+  .pop { animation: pop .35s ease-out; transform-box: fill-box; transform-origin: 50% 100%; }
   @keyframes pop { 0% { transform: scale(.2); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
   .float { animation: floatup 1.6s ease-out forwards; }
   @keyframes floatup { 0% { opacity: 0; transform: translateY(6px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(-46px); } }
@@ -127,16 +127,27 @@
   .ev { font-size: 17px; background: #0b1020; border-left: 4px solid var(--line); padding: 2px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ev.win { border-color: var(--good); } .ev.loss { border-color: var(--bad); } .ev.info { border-color: var(--gold); }
   .ev.new { animation: fadein .5s; } @keyframes fadein { from { opacity: 0; } }
+  .titlebox, .scorebox { display: inline-flex; align-items: center; gap: 8px; }
+  @media (orientation: portrait), (max-width: 760px) {
+    .top { position: relative; flex-direction: column; justify-content: center; text-align: center; gap: 4px; padding: 10px 46px 8px; }
+    .top .spacer { display: none; }
+    .titlebox { flex-wrap: wrap; justify-content: center; }
+    .title { font-size: 11px; white-space: normal; }
+    #clock { white-space: normal; font-size: 16px; line-height: 1.1; }
+    .score { font-size: 17px; }
+    .ctl { position: absolute; top: 6px; right: 6px; }
+    .ctl a.btn { font-size: 0; padding: 2px 6px; }
+    .ctl a.btn::first-letter { font-size: 16px; }
+  }
   @media (orientation: portrait), (max-width: 760px) { .side { grid-template-rows: auto auto; } .feed .list { max-height: 260px; } }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="box top">
-    <span class="title">🏢 ESCRITORIO EMILLION</span>
-    <span class="badge" id="mode">-</span>
+    <span class="titlebox"><span class="title">🏢 ESCRITORIO EMILLION</span> <span class="badge" id="mode">-</span></span>
     <span class="meta" id="clock">--</span>
-    <span class="score" id="score">0</span><span class="meta" id="score-unit">pts</span>
+    <span class="scorebox"><span class="score" id="score">0</span> <span class="meta" id="score-unit">pts</span></span>
     <span class="spacer"></span>
     <div class="ctl">
       <a class="btn" href="time.html" title="graficos, rodadas e pregoes anteriores">📊 painel</a>
