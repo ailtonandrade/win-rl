@@ -95,6 +95,22 @@
   @keyframes bub { from { transform: translateY(0); opacity: .9; } to { transform: translateY(-14px); opacity: 0; } }
 
   .hint { position: absolute; left: 10px; bottom: 8px; font-size: 16px; color: var(--muted); pointer-events: none; }
+  .radio-panel { position: absolute; left: 12px; bottom: 12px; z-index: 4; width: min(300px, calc(100% - 24px)); display: none;
+                 background: #2a1a12; border: 3px solid #6d4c33; border-radius: 8px; box-shadow: 0 4px 0 #000a, inset 0 0 0 2px #8a6a4a;
+                 padding: 10px 12px; color: #ffe9c4; font: 16px var(--term); }
+  .radio-panel.open { display: block; animation: fadein .25s; }
+  .radio-panel .hd { display: flex; justify-content: space-between; align-items: center; font: 9px var(--pix); color: #ffd166; }
+  .radio-panel .hd button { font: 14px var(--term); padding: 0 6px; background: #3a2418; border-color: #6d4c33; color: #ffe9c4; }
+  .radio-panel .dial { margin: 8px 0; background: #0f1a0f; border: 2px solid #000; border-radius: 4px; padding: 4px 8px; overflow: hidden;
+                       color: #7CFF7C; font: 18px var(--term); white-space: nowrap; text-shadow: 0 0 6px #4f4; }
+  .radio-panel .dial span { display: inline-block; padding-left: 100%; animation: marquee 9s linear infinite; }
+  .radio-panel .dial.off span { animation: none; padding-left: 0; color: #3a5a3a; text-shadow: none; }
+  @keyframes marquee { to { transform: translateX(-100%); } }
+  .radio-panel .row { display: flex; align-items: center; gap: 6px; }
+  .radio-panel .row button { font: 18px var(--term); min-width: 40px; background: #3a2418; border-color: #6d4c33; color: #ffe9c4; }
+  .radio-panel .row button.big { min-width: 56px; background: #6d2f1f; }
+  .radio-panel input[type=range] { flex: 1; accent-color: #ffd166; }
+  .radio-hint { position: absolute; z-index: 3; font: 8px var(--pix); color: #ffd166; pointer-events: none; text-shadow: 1px 1px 0 #000; }
   .banner { position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); font: 12px var(--pix); text-align: center;
             background: #0b1020ee; border: 2px solid var(--line); padding: 16px 20px; display: none; line-height: 1.8; }
 
@@ -130,6 +146,16 @@
   <div class="box scene" id="scene">
     <svg id="svg" viewBox="30 -10 740 530" preserveAspectRatio="xMidYMid meet"></svg>
     <div class="banner" id="banner"></div>
+    <div class="radio-panel" id="radio">
+      <div class="hd"><span>📻 RADIO EMILLION 87.7 FM</span><button id="radio-close" title="fechar">×</button></div>
+      <div class="dial off" id="radio-dial"><span id="radio-title">desligado · clique no play</span></div>
+      <div class="row">
+        <button id="radio-prev" title="musica anterior">⏮</button>
+        <button id="radio-play" class="big" title="tocar / pausar">▶</button>
+        <button id="radio-next" title="proxima musica">⏭</button>
+        <span title="volume">🔊</span><input type="range" id="radio-vol" min="0" max="100" value="50">
+      </div>
+    </div>
   </div>
 
   <div class="side">
@@ -236,6 +262,7 @@ function build(names) {
   // objetos com profundidade (de tras pra frente)
   const objs = [];
   objs.push({ d: 10.9, draw: gg => shelf(gg, 9.3, 0.15) });
+  objs.push({ d: 10.95, draw: gg => radioSprite(gg, 9.75, 0.2) });
   objs.push({ d: 12.9, draw: gg => cooler(gg, 12.3, 0.6) });
   objs.push({ d: 6.8, draw: gg => coffee(gg, 0.15, 6.2) });
   objs.push({ d: 8.6, draw: gg => plant(gg, 0.6, 8.0, 1) });
@@ -993,6 +1020,160 @@ function maybeWalk(now) {
   if (!free.length) { S.nextWalk = now + 3000; return; }
   startWalk(free[Math.floor(Math.random() * free.length)]);
 }
+
+// ============================================================== Radio Emillion 87.7 FM
+// musicas de elevador geradas na hora (Web Audio): nada de arquivo, nada de direito autoral
+function radioSprite(g, x, y) {
+  const z = 74, w = .78, d = .32, h = 18;
+  const grp = el('g', { style: 'cursor:pointer', 'pointer-events': 'all' }, g);
+  box(grp, x, y, w, d, h, z, '#b5452b');
+  box(grp, x + .02, y + .02, w - .04, d - .04, 2, z + h, '#8a3320');
+  const f = onFaceY(grp, x, y + d, z + h);
+  const FW = w * T;
+  R(f, 2, 2, FW - 4, h - 4, '#6e2a19');
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) R(f, 4 + c * 3, 4 + r * 3.5, 1.5, 1.5, '#2a0f08');      // alto-falante
+  R(f, FW / 2 + 1, 4, FW / 2 - 5, 5, '#ffe08a'); R(f, FW / 2 + 3, 5, 1, 3, '#c0392b');                         // dial
+  S.radioLed = R(f, FW - 6, 11, 2, 2, '#3a1a10');
+  el('circle', { cx: FW / 2 + 4, cy: 13, r: 1.6, fill: '#2a0f08' }, f); el('circle', { cx: FW / 2 + 9, cy: 13, r: 1.6, fill: '#2a0f08' }, f);
+  const [ax, ay] = iso(x + w - .1, y + .1, z + h + 2);
+  el('line', { x1: ax, y1: ay, x2: ax + 10, y2: ay - 22, stroke: '#cfd6df', 'stroke-width': 1 }, grp);
+  el('circle', { cx: ax + 10, cy: ay - 22, r: 1.5, fill: '#cfd6df' }, grp);
+  const [hx, hy] = iso(x + w / 2, y + d / 2, z + h);
+  R(grp, hx - 22, hy - 30, 44, 34, '#000', { opacity: 0 });                                                  // area de clique maior
+  S.radioPos = [hx, hy - 6];
+  grp.addEventListener('click', ev => { ev.stopPropagation(); Radio.toggleUI(); });
+  Radio.syncLed();
+}
+
+const Radio = (() => {
+  const TRACKS = [
+    { name: 'Bossa do Spread', bpm: 104, swing: 0, lead: 'piano',
+      chords: [[36, 'maj7'], [45, 'm7'], [38, 'm7'], [43, 'd7'], [40, 'm7'], [45, 'd7'], [38, 'm7'], [43, 'd7']],
+      comp: [0, 1.5, 3], bass: [[0, 0], [1.5, 7], [2, 0], [3.5, 7]], clave: [0, 1.5, 3, 5, 6.5], mel: [0, 2, 3, 6], seed: 11 },
+    { name: 'Lounge do Stop Loss', bpm: 80, swing: .32, lead: 'vibes',
+      chords: [[41, 'maj7'], [40, 'm7'], [45, 'd7'], [38, 'm7'], [43, 'm7'], [36, 'd7'], [41, 'maj7'], [36, 'd7']],
+      comp: [0, 2, 3.5], bass: [[0, 0], [1, 7], [2, 12], [3, 7]], clave: [1, 3, 5, 7], mel: [0, 3, 4, 5], seed: 5 },
+  ];
+  const Q = { maj7: [0, 4, 7, 11], m7: [0, 3, 7, 10], d7: [0, 4, 7, 10] };
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  let ctx = null, bus, master, noise, playing = false, timer = null, nextT = 0, step = 0, track = 0, vol = .5, notesTimer = null, melody = [];
+  try { const sv = JSON.parse(localStorage.getItem('radioEmillion') || '{}'); if (sv.vol != null) vol = sv.vol; if (sv.track != null) track = sv.track % TRACKS.length; } catch (e) {}
+  const save = () => { try { localStorage.setItem('radioEmillion', JSON.stringify({ vol, track })); } catch (e) {} };
+
+  function init() {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = vol * .55;
+    const comp = ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
+    bus = ctx.createGain(); bus.connect(master);
+    const verb = ctx.createConvolver(), len = ctx.sampleRate * 2.2, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+    verb.buffer = ir; const wet = ctx.createGain(); wet.gain.value = .28; bus.connect(verb); verb.connect(wet); wet.connect(master);
+    noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const nd = noise.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  }
+  function env(g, t, a, peak, dur, rel = .25) {
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + a);
+    g.gain.exponentialRampToValueAtTime(Math.max(peak * .25, .0001), t + Math.max(dur, a + .02));
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur + rel);
+  }
+  function tone(type, f, t, dur, peak, dest = bus, a = .01) {
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = f;
+    env(g, t, a, peak, dur); o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + .4);
+  }
+  const epiano = (m, t, dur, v) => { tone('sine', mtof(m), t, dur, v); tone('sine', mtof(m) * 2, t, dur * .35, v * .22); tone('triangle', mtof(m) * 4, t, .08, v * .05); };
+  function vibes(m, t, dur, v) {
+    const o = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = mtof(m); lfo.frequency.value = 5.5; lg.gain.value = v * .35;
+    lfo.connect(lg); lg.connect(g.gain); env(g, t, .005, v, dur + .5, .6);
+    o.connect(g); g.connect(bus); o.start(t); lfo.start(t); o.stop(t + dur + 1.2); lfo.stop(t + dur + 1.2);
+    tone('sine', mtof(m) * 4, t, .12, v * .08);
+  }
+  function bass(m, t, dur, v) {
+    const o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
+    o.type = 'triangle'; o.frequency.value = mtof(m); lp.type = 'lowpass'; lp.frequency.value = 700;
+    env(g, t, .01, v, dur, .08); o.connect(lp); lp.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + .2);
+  }
+  function hit(t, v, hp, dur) {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise; f.type = 'highpass'; f.frequency.value = hp;
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(bus); s.start(t); s.stop(t + dur + .02);
+  }
+  const rim = (t, v) => { tone('square', 1750, t, .015, v * .25); hit(t, v * .4, 2500, .03); };
+  function chime(t) { [[76, 0], [72, .55]].forEach(([m, dt]) => { tone('sine', mtof(m), t + dt, 1.4, .22); tone('sine', mtof(m) * 2.76, t + dt, .5, .04); }); }
+
+  function buildMelody(tr) {
+    let s = tr.seed; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+    const out = []; let last = 74;
+    tr.chords.forEach(([root, q], bar) => {
+      const pool = [];
+      for (const o of [24, 36]) for (const iv of Q[q].concat([2, 9])) pool.push(root + o + iv);
+      const cand = pool.filter(m => m >= 67 && m <= 84).sort((a, b) => Math.abs(a - last) - Math.abs(b - last));
+      tr.mel.forEach((pos8, i) => {
+        if (bar % 4 === 3 && i > 1) return;                              // respiro no fim da frase
+        const pick = cand[Math.min(cand.length - 1, Math.floor(rnd() * 3))];
+        last = pick;
+        const nextPos = tr.mel[i + 1] ?? 8;
+        out.push([bar * 8 + pos8, pick, (nextPos - pos8) * .5 * .9]);
+      });
+    });
+    return out;
+  }
+
+  function scheduleStep(st, t) {
+    const tr = TRACKS[track], bar = Math.floor(st / 8), beat = (st % 8) / 2;
+    const [root, q] = tr.chords[bar], spb = 60 / tr.bpm;
+    if (st % 2) t += tr.swing * spb * .5;
+    if (tr.comp.includes(beat)) Q[q].forEach((iv, i) => epiano(root + 24 + iv - (iv > 7 && i === 3 ? 12 : 0), t + i * .008, spb * .9, .07));
+    for (const [b, iv] of tr.bass) if (b === beat) bass(root + iv, t, spb * .45, .3);
+    hit(t, st % 2 ? .05 : .025, 7000, .04);
+    if (tr.clave.includes((bar % 2) * 4 + beat)) rim(t, .18);
+    for (const [s8, m, dur] of melody) if (s8 === st) (tr.lead === 'vibes' ? vibes : epiano)(m, t, dur * spb * 2, tr.lead === 'vibes' ? .1 : .085);
+  }
+  function tick() {
+    const spb = 60 / TRACKS[track].bpm;
+    while (nextT < ctx.currentTime + .15) { scheduleStep(step, nextT); nextT += spb / 2; step = (step + 1) % 64; }
+  }
+  function startTrack(withIntro) {
+    melody = buildMelody(TRACKS[track]); step = 0;
+    nextT = ctx.currentTime + (withIntro ? 2.2 : .1);
+    if (withIntro) chime(ctx.currentTime + .05);
+    updateUI();
+  }
+  function play() {
+    if (!ctx) init();
+    ctx.resume(); playing = true;
+    startTrack(true);
+    clearInterval(timer); timer = setInterval(tick, 25);
+    clearInterval(notesTimer);
+    notesTimer = setInterval(() => { if (S.radioPos && S.fx) floatText([S.radioPos[0] + (Math.random() - .5) * 16, S.radioPos[1]], Math.random() < .5 ? '♪' : '♫', ['#ffd166', '#7fd4ff', '#ff9aa2'][Math.floor(Math.random() * 3)], 9); }, 650);
+    syncLed();
+  }
+  function pause() {
+    playing = false; clearInterval(timer); clearInterval(notesTimer);
+    if (ctx) ctx.suspend();
+    updateUI(); syncLed();
+  }
+  function skip(dir) {
+    track = (track + dir + TRACKS.length) % TRACKS.length; save();
+    if (playing) { ctx.suspend().then(() => { ctx.resume(); startTrack(false); }); } else updateUI();
+  }
+  function setVol(v) { vol = v; save(); if (master) master.gain.setTargetAtTime(v * .55, ctx.currentTime, .05); }
+  function syncLed() { if (S.radioLed) S.radioLed.setAttribute('fill', playing ? '#7CFF7C' : '#3a1a10'); }
+  function updateUI() {
+    $('radio-play').textContent = playing ? '⏸' : '▶';
+    $('radio-dial').classList.toggle('off', !playing);
+    $('radio-title').textContent = playing ? `♪ ${TRACKS[track].name} · Radio Emillion 87.7 FM · o som que acalma o seu drawdown ♪` : `desligado · proxima: ${TRACKS[track].name}`;
+    $('radio-vol').value = Math.round(vol * 100);
+  }
+  function toggleUI() { $('radio').classList.toggle('open'); updateUI(); }
+  return { play, pause, skip, setVol, toggleUI, syncLed, isPlaying: () => playing };
+})();
+$('radio-play').onclick = () => (Radio.isPlaying() ? Radio.pause() : Radio.play());
+$('radio-next').onclick = () => Radio.skip(1);
+$('radio-prev').onclick = () => Radio.skip(-1);
+$('radio-vol').oninput = e => Radio.setVol(+e.target.value / 100);
+$('radio-close').onclick = () => $('radio').classList.remove('open');
 
 // ============================================================== tempo real
 function loop(ts) {
