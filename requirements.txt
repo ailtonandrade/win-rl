@@ -1,0 +1,11 @@
+# Python 3.12, Windows (o pacote MetaTrader5 so existe para Windows)
+# torch CPU: pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
+MetaTrader5==5.0.6231
+numpy==2.5.4
+pandas==3.0.6
+pyarrow==26.0.0
+plotly==7.1.0
+gymnasium==1.4.0
+stable-baselines3==2.9.0
+tensorboard==2.21.0
+torch==2.14.1

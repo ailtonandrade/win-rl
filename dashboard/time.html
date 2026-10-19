@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Megazord WIN</title>
+<script src="plotly.min.js"></script>
+<style>
+  :root {
+    --bg: #07090d; --panel: #10151d; --panel2: #151c26; --line: #222b38; --text: #e6edf3; --muted: #7d8794;
+    --up: #26a69a; --down: #ef5350; --long: #3b8cff; --short: #ff8a3d; --flat: #7d8794;
+    --good: #2ee66b; --bad: #ff4d5e; --accent: #b07cff; --warn: #ffc53d; --gold: #ffd166; --live: #ff3b47;
+    --num: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+    --hud-h: 76px; --bottom-h: clamp(150px, 22vh, 220px); --side-w: clamp(300px, 25vw, 380px); --gap: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: radial-gradient(1200px 600px at 30% -10%, #121a2a 0%, var(--bg) 60%) fixed;
+         color: var(--text); font: 13px/1.3 "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  .app { height: 100vh; display: grid; gap: var(--gap); padding: var(--gap);
+         grid-template-rows: auto minmax(0, 1fr) var(--bottom-h);
+         grid-template-columns: minmax(0, 1fr) var(--side-w);
+         grid-template-areas: "hud hud" "chart side" "bottom bottom"; }
+  .card { background: linear-gradient(180deg, var(--panel2), var(--panel)); border: 1px solid var(--line);
+          border-radius: 10px; min-width: 0; min-height: 0; position: relative; overflow: hidden; }
+  .card h2 { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+             margin: 0; padding: 7px 10px 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .num { font-family: var(--num); font-variant-numeric: tabular-nums; }
+  .good { color: var(--good) !important; } .bad { color: var(--bad) !important; } .dim { color: var(--muted); }
+
+  /* HUD */
+  .hud { grid-area: hud; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 7px 12px; }
+  .brand { flex: 0 1 200px; min-width: 165px; }
+  .brand .t { font-weight: 900; font-size: 17px; letter-spacing: .04em; white-space: nowrap; }
+  .brand .t b { background: linear-gradient(180deg, #fff3c4 0%, #ffd166 45%, #b8860b 100%);
+                -webkit-background-clip: text; background-clip: text; color: transparent;
+                filter: drop-shadow(0 0 6px #ffd16655); }
+  .brand .s { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 15px; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 10px; font-weight: 800;
+           text-transform: uppercase; letter-spacing: .06em; margin-right: 6px; }
+  .b-treino { background: #3d2466; color: #d8b4ff; }
+  .b-replay { background: #12325c; color: #8cc8ff; }
+  .b-ao_vivo { background: #4a1015; color: #ff8a92; }
+  .b-ao_vivo::before { content: "● "; color: var(--live); animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .2; } }
+  .xp { height: 6px; background: #0b0f15; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .xp > div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--long)); transition: width .4s; }
+  .score { text-align: center; padding: 0 14px; border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+           display: flex; flex-direction: column; justify-content: center; flex: 0 0 auto; min-width: 150px; }
+  .score .lbl { font-size: 10px; letter-spacing: .14em; color: var(--muted); font-weight: 700; }
+  .score .v { font: 800 26px/1.05 var(--num); text-shadow: 0 0 18px currentColor; }
+  .score .brl { font: 600 12px var(--num); color: var(--muted); }
+  .stats { display: flex; gap: 5px; flex: 1 1 300px; min-width: 0; }
+  .stat { text-align: center; min-width: 0; flex: 1 1 0; background: #0b0f15; border: 1px solid var(--line); border-radius: 8px; padding: 3px 4px; }
+  .stat .lbl { font-size: 9.5px; letter-spacing: .1em; color: var(--muted); font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+  .stat .v { font: 700 15px/1.35 var(--num); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 20px; display: flex; align-items: center; justify-content: center; }
+  .ring { width: 20px; height: 20px; border-radius: 50%; margin: 0 4px 0 0; flex: none; display: grid; place-items: center;
+          background: conic-gradient(var(--good) calc(var(--p) * 1%), #2a3340 0); }
+  .ring > span { width: 12px; height: 12px; border-radius: 50%; background: #0b0f15; }
+  .controls { display: flex; gap: 6px; align-items: center; flex: 0 0 auto; margin-left: auto; }
+  .player { display: flex; gap: 4px; align-items: center; background: #0b0f15; border: 1px solid var(--line); border-radius: 9px; padding: 4px 6px; }
+  .player button { min-width: 30px; padding: 4px 6px; }
+  .nav { display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 9px; font-weight: 800; text-decoration: none;
+         color: #1a1300; background: linear-gradient(180deg, #ffe08a, #ffc53d); border: 1px solid #b8860b; white-space: nowrap; }
+  .nav:hover { filter: brightness(1.08); }
+  select, button { background: #0b0f15; color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 5px 8px; font: inherit; }
+  select { width: 150px; }
+  button { cursor: pointer; min-width: 34px; } button:hover { border-color: var(--muted); }
+  .speed { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--muted); width: 80px; }
+  .speed input { width: 80px; }
+  .follow { font-size: 10px; color: var(--muted); display: flex; gap: 4px; align-items: center; white-space: nowrap; }
+
+  /* grafico */
+  .chartcard { grid-area: chart; }
+  .plot { position: absolute; inset: 26px 6px 22px 6px; }
+  .timeline { position: absolute; left: 66px; right: 76px; bottom: 6px; height: 12px; }
+  .timeline input { width: 100%; margin: 0; accent-color: var(--accent); }
+  .clock { position: absolute; top: 6px; right: 12px; font: 600 12px var(--num); color: var(--muted); }
+  .toasts { position: absolute; left: 50%; top: 30%; pointer-events: none; z-index: 3; }
+  .toast { position: absolute; left: 0; transform: translateX(-50%); white-space: nowrap; font: 900 40px/1 var(--num);
+           text-shadow: 0 0 24px currentColor, 0 2px 0 #000; animation: rise 1.6s ease-out forwards; }
+  .toast small { display: block; text-align: center; font: 700 13px "Segoe UI", sans-serif; }
+  @keyframes rise { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.6); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); }
+                    30% { transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -70px); } }
+  .banner { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 2; text-align: center;
+            background: #0b0f15ee; border: 1px solid var(--line); border-radius: 12px; padding: 18px 26px; display: none; }
+  .banner .big { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+
+  /* lateral */
+  .side { grid-area: side; display: grid; gap: var(--gap); min-height: 0; grid-template-rows: 112px 74px minmax(0, 1fr); }
+  .mz { padding: 8px 12px; transition: box-shadow .3s, border-color .3s; }
+  .mz.long { border-color: var(--long); box-shadow: 0 0 26px #3b8cff55 inset; }
+  .mz.short { border-color: var(--short); box-shadow: 0 0 26px #ff8a3d55 inset; }
+  .mz .top { display: flex; justify-content: space-between; align-items: center; }
+  .mz .who { font-size: 10px; letter-spacing: .14em; color: var(--muted); font-weight: 800; }
+  .posname { font: 900 24px/1 "Segoe UI", sans-serif; letter-spacing: .04em; }
+  .posname.long { color: var(--long); } .posname.short { color: var(--short); } .posname.flat { color: var(--flat); }
+  .price { text-align: right; }
+  .price .v { font: 800 22px/1 var(--num); } .price .t { font: 600 11px var(--num); color: var(--muted); }
+  .mzline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .mzline div { background: #0b0f15; border-radius: 6px; padding: 3px 6px; text-align: center; }
+  .mzline .l { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .mzline .v { font: 700 13px var(--num); white-space: nowrap; }
+  .holdbar { height: 5px; background: #0b0f15; border-radius: 3px; overflow: hidden; margin-top: 6px; }
+  .holdbar > div { height: 100%; background: var(--warn); transition: width .15s; }
+  .pop { animation: pop .35s; } @keyframes pop { 40% { transform: scale(1.12); } }
+
+  .votecard { padding: 6px 10px; }
+  .meter { position: relative; height: 26px; margin-top: 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+  .half { display: flex; gap: 2px; }
+  .half.l { flex-direction: row-reverse; }
+  .pip { flex: 1; border-radius: 4px; background: #1b2330; transition: background .2s; position: relative; }
+  .pip.on.buy { background: var(--long); box-shadow: 0 0 8px #3b8cff88; }
+  .pip.on.sell { background: var(--short); box-shadow: 0 0 8px #ff8a3d88; }
+  .pip.th::after { content: ""; position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--gold); }
+  .half.l .pip.th::after { left: -2px; } .half.r .pip.th::after { right: -2px; }
+  .votelbl { display: flex; justify-content: space-between; font-size: 11px; margin-top: 4px; }
+  .verdict { font-weight: 800; }
+
+  .council { padding: 6px 8px; display: grid; grid-template-rows: auto repeat(var(--n, 5), minmax(0, 1fr)); gap: 5px; }
+  .council h2 { padding: 1px 2px 0; }
+  .tr { display: grid; grid-template-columns: 34px minmax(0, 1fr) 92px; gap: 8px; align-items: center;
+        background: #0b0f15; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; min-height: 0; transition: border-color .2s; }
+  .tr .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 15px; color: #000; }
+  .tr .nm { font-weight: 800; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tr .sub { font: 600 11px var(--num); color: var(--muted); white-space: nowrap; overflow: hidden; }
+  .tr .pr { height: 4px; display: flex; border-radius: 2px; overflow: hidden; margin-top: 3px; background: #1b2330; }
+  .plate { text-align: center; border-radius: 7px; padding: 5px 2px; font-weight: 900; font-size: 13px; letter-spacing: .04em;
+           border: 2px solid transparent; transform-origin: bottom; }
+  .plate small { display: block; font: 600 10px var(--num); opacity: .85; letter-spacing: 0; }
+  .plate.buy { background: #12305a; color: #8cc3ff; border-color: var(--long); }
+  .plate.sell { background: #4a2610; color: #ffb27a; border-color: var(--short); }
+  .plate.wait { background: #1b2330; color: var(--muted); }
+  .plate.flip { animation: flip .35s; } @keyframes flip { 0% { transform: rotateX(80deg); } 100% { transform: none; } }
+  .tr.agree-buy { border-color: #3b8cff88; } .tr.agree-sell { border-color: #ff8a3d88; }
+
+  /* rodape */
+  .bottom { grid-area: bottom; display: grid; gap: var(--gap); grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.1fr); min-height: 0; }
+  .chips { position: absolute; inset: 26px 8px 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+           grid-auto-rows: 44px; gap: 6px; overflow: hidden; align-content: start; }
+  .chip { border-radius: 8px; padding: 4px 8px; background: #0b0f15; border: 1px solid var(--line); display: grid;
+          grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; column-gap: 6px; font-size: 11px; }
+  .chip .dir { font-weight: 900; grid-row: span 2; align-self: center; font-size: 16px; }
+  .chip .pts { font: 800 14px var(--num); text-align: right; }
+  .chip .meta { color: var(--muted); font-family: var(--num); white-space: nowrap; overflow: hidden; }
+  .chip.win { border-color: #2ee66b66; } .chip.loss { border-color: #ff4d5e55; }
+  .chip.new { animation: chipin .5s; } @keyframes chipin { from { transform: scale(.7); opacity: 0; } }
+  .empty { color: var(--muted); font-size: 12px; padding: 8px 2px; }
+  .rows { position: absolute; inset: 26px 10px 8px; display: grid; gap: 4px; align-content: start; overflow: hidden; }
+  .row { display: grid; grid-template-columns: 70px minmax(0, 1fr) 70px; gap: 8px; align-items: center; font-size: 12px; }
+  .row .bar { height: 10px; background: #0b0f15; border-radius: 5px; overflow: hidden; position: relative; }
+  .row .bar > div { position: absolute; top: 0; bottom: 0; }
+  .row .v { text-align: right; font: 700 12px var(--num); white-space: nowrap; }
+  .row .nm { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .mid { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--line); }
+  .tag { font-size: 9px; padding: 0 4px; border-radius: 4px; background: #2d4a2d; color: #7ee787; margin-left: 4px; }
+  .tag.no { background: #3a2a1a; color: #d29922; }
+
+  @media (max-width: 1100px), (max-height: 560px) {
+    body { overflow: auto; }
+    .app { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 460px auto auto;
+           grid-template-areas: "hud" "chart" "side" "bottom"; }
+    .side { grid-template-rows: 112px 74px 340px; }
+    .bottom { grid-template-columns: minmax(0, 1fr); grid-auto-rows: 210px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="card hud">
+    <div class="brand">
+      <div class="t">🤖 <b>MEGAZORD</b> WIN</div>
+      <div class="s"><span id="mode" class="badge"></span><span id="sub"></span></div>
+      <div class="xp"><div id="xp" style="width:0"></div></div>
+    </div>
+    <div class="score">
+      <div class="lbl">PLACAR DO MEGAZORD</div>
+      <div class="v num" id="score">0</div>
+      <div class="brl" id="score-brl">R$ 0,00 · aberto 0</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="lbl">trades</div><div class="v" id="st-trades">0</div></div>
+      <div class="stat"><div class="lbl">acerto</div><div class="v"><span class="ring" id="st-ring" style="--p:0"><span></span></span><span id="st-wr">0%</span></div></div>
+      <div class="stat"><div class="lbl">serie</div><div class="v" id="st-streak">-</div></div>
+      <div class="stat"><div class="lbl">MVP</div><div class="v" id="st-mvp">-</div></div>
+      <div class="stat"><div class="lbl">consenso</div><div class="v" id="st-cons">-</div></div>
+      <div class="stat"><div class="lbl">custos</div><div class="v bad" id="st-cost">0</div></div>
+    </div>
+    <div class="controls">
+      <div class="player">
+        <select id="episode" title="pregao"></select>
+        <button id="prev" title="candle anterior (←)">‹</button>
+        <button id="play" title="tocar/pausar (espaco)">⏸</button>
+        <button id="next" title="proximo candle (→)">›</button>
+        <div class="speed"><input type="range" id="speed" min="1" max="60" value="8"><span><b id="speedv">8</b> candles/s</span></div>
+        <label class="follow"><input type="checkbox" id="follow" checked> <span id="follow-lbl">seguir</span></label>
+      </div>
+      <a class="nav" href="escritorio.html" title="ver o time no escritorio isometrico">🏢 Escritorio</a>
+    </div>
+  </div>
+
+  <div class="card chartcard">
+    <h2 id="chart-title">Mini indice M1 · entradas e saidas do Megazord</h2>
+    <div class="clock" id="clock"></div>
+    <div class="plot" id="chart"></div>
+    <div class="toasts" id="toasts"></div>
+    <div class="banner" id="banner"><div class="big" id="banner-big"></div><div class="dim" id="banner-small"></div></div>
+    <div class="timeline"><input type="range" id="scrub" min="0" max="0" value="0"></div>
+  </div>
+
+  <div class="side">
+    <div class="card mz" id="mzcard">
+      <div class="top">
+        <div><div class="who">MEGAZORD</div><div class="posname flat" id="pos">ZERADO</div></div>
+        <div class="price"><div class="v" id="now-price">-</div><div class="t" id="now-time">--:--</div></div>
+      </div>
+      <div class="mzline">
+        <div><div class="l">entrada</div><div class="v" id="o-entry">-</div></div>
+        <div><div class="l">aberto</div><div class="v" id="o-unreal">-</div></div>
+        <div><div class="l">tempo</div><div class="v" id="o-hold">-</div></div>
+      </div>
+      <div class="holdbar"><div id="hold-bar" style="width:0"></div></div>
+    </div>
+
+    <div class="card votecard">
+      <h2 style="padding:0">Votacao · <span id="rule"></span></h2>
+      <div class="meter"><div class="half l" id="pips-sell"></div><div class="half r" id="pips-buy"></div></div>
+      <div class="votelbl"><span id="v-sell" style="color:var(--short)">vende 0</span><span class="verdict" id="verdict">-</span><span id="v-buy" style="color:var(--long)">compra 0</span></div>
+    </div>
+
+    <div class="card council" id="council"><h2>Conselho · o que cada trader quer</h2></div>
+  </div>
+
+  <div class="bottom">
+    <div class="card"><h2>Trades do Megazord (mais recente primeiro)</h2><div class="chips" id="chips"></div></div>
+    <div class="card"><h2 id="board-title">Placar do dia por trader</h2><div class="rows" id="leader"></div></div>
+    <div class="card"><h2 id="team-title">Time</h2><div class="rows" id="teampanel"></div><div class="plot" id="learn" style="inset:24px 4px 4px;display:none"></div></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const C = { up: css('--up'), down: css('--down'), long: css('--long'), short: css('--short'), flat: css('--flat'),
+            good: css('--good'), bad: css('--bad'), accent: css('--accent'), warn: css('--warn'), gold: css('--gold'),
+            muted: css('--muted'), line: css('--line'), text: css('--text') };
+const TC = ['#ff6b6b', '#4dabf7', '#51cf66', '#fcc419', '#cc5de8', '#20c997', '#f783ac', '#94d82d', '#ffa94d', '#748ffc'];
+const fmt = (v, d = 0) => v == null || isNaN(v) ? '-' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const sgn = (v, d = 0) => v == null || isNaN(v) ? '-' : (v > 0 ? '+' : v < 0 ? '−' : '') + fmt(Math.abs(v), d);
+const tone = (el, v) => { el.classList.toggle('good', v > 0); el.classList.toggle('bad', v < 0); };
+const posName = p => p > 0 ? 'COMPRADO' : p < 0 ? 'VENDIDO' : 'ZERADO';
+const posCls = p => p > 0 ? 'long' : p < 0 ? 'short' : 'flat';
+const REASON = { 'agente': '🤖', 'tempo max': '⏱', 'fim do dia': '🔔' };
+const NUMFONT = 'Cascadia Mono, Consolas, monospace';
+
+let index = null, ep = null, epId = null, epFile = null, p = 0, playing = true, lastTick = 0, lastStamp = 0;
+let byI = new Map(), shownScore = 0, scoreTarget = 0, lastDone = 0, lastPos = 0, lastK = -1, lastWants = [];
+const live = () => index && index.mode === 'ao_vivo';
+
+const baseLayout = { autosize: true, paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: C.text, size: 11 },
+  showlegend: false, hovermode: 'x unified', hoverlabel: { bgcolor: '#0b0f15', bordercolor: C.line, font: { family: NUMFONT } } };
+const axis = { gridcolor: '#1b2330', zerolinecolor: C.line, linecolor: C.line, automargin: false, fixedrange: true };
+const plotCfg = { displayModeBar: false, responsive: true };
+
+async function getJSON(url) { const r = await fetch(url + '?t=' + Date.now()); if (!r.ok) throw new Error(r.status); return r.json(); }
+
+// ---------------------------------------------------------------- dados
+async function pollIndex() {
+  try {
+    const idx = await getJSON('data/index.json');
+    if (idx.updated === lastStamp) return;
+    lastStamp = idx.updated;
+    const first = !index;
+    index = idx;
+    $('mode').textContent = { treino: 'treinando', replay: 'replay', ao_vivo: 'ao vivo' }[idx.mode] || idx.mode;
+    $('mode').className = 'badge b-' + idx.mode;
+    $('follow-lbl').textContent = live() ? 'ao vivo' : 'seguir';
+    renderEpisodeList(); renderTeam(); renderXP();
+    const newest = idx.episodes.at(-1);
+    if (!newest) return banner(live() ? 'Aguardando o mercado' : 'Aguardando o time', idx.live?.status || 'nenhum pregao publicado ainda');
+    if (live()) {
+      banner(null);
+      if ($('follow').checked || !ep) await loadEpisode(newest.id, true);
+      return;
+    }
+    if (first || !ep || ($('follow').checked && idx.mode === 'treino' && newest.id !== epId && p >= ep.bars.length - 1))
+      await loadEpisode(idx.mode === 'replay' && first ? idx.episodes[0].id : newest.id);
+  } catch (e) { banner('Painel sem dados', 'rode o run.bat (' + e.message + ')'); }
+}
+
+function banner(big, small) {
+  $('banner').style.display = big ? 'block' : 'none';
+  if (big) { $('banner-big').textContent = big; $('banner-small').textContent = small || ''; }
+}
+
+function renderEpisodeList() {
+  $('episode').innerHTML = index.episodes.map(e =>
+    `<option value="${e.id}">${e.round != null ? 'rodada ' + e.round + ' · ' : ''}${e.day} · ${sgn(e.pnl_pts)} pts</option>`).join('');
+  if (epId != null) $('episode').value = epId;
+}
+
+function renderXP() {
+  const t = index.team || {}, n = index.episodes.length;
+  if (index.mode === 'treino') {
+    $('sub').textContent = `rodada ${t.round ?? '-'} · ${t.phase || ''}`;
+    $('xp').style.width = (t.round_progress ?? 0) * 100 + '%';
+  } else if (live()) {
+    $('sub').textContent = index.live?.source || '';
+    $('xp').style.width = ep ? Math.min(100, 100 * ep.bars.length / 565) + '%' : '0';
+  } else {
+    const pos = index.episodes.findIndex(e => e.id === epId) + 1;
+    $('sub').textContent = `pregao ${pos || '-'} de ${n}`;
+    $('xp').style.width = n ? 100 * pos / n + '%' : '0';
+  }
+}
+
+async function loadEpisode(id, keepPos) {
+  const meta = index.episodes.find(e => e.id === id);
+  if (!meta) return;
+  const fresh = id !== epId;
+  ep = await getJSON('data/' + meta.file);
+  byI = new Map(ep.steps.map(s => [s.i, s]));
+  epId = id;
+  $('episode').value = id;
+  $('scrub').max = ep.bars.length - 1;
+  if (fresh) { lastDone = 0; lastPos = 0; lastK = -1; shownScore = 0; $('chips').innerHTML = ''; buildCouncil(); Plotly.purge('chart'); }
+  if (live() && $('follow').checked) p = ep.bars.length - 1;
+  else if (!keepPos || fresh) p = live() ? ep.bars.length - 1 : 0;
+  draw(true);
+  renderXP();
+}
+
+// ---------------------------------------------------------------- conselho (5 plaquinhas)
+function buildCouncil() {
+  const names = ep.team.names, box = $('council');
+  box.style.setProperty('--n', names.length);
+  box.innerHTML = '<h2>Conselho · o que cada trader quer agora</h2>' + names.map((n, j) => `
+    <div class="tr" id="tr${j}">
+      <div class="av" style="background:${TC[j]}">${n[0]}</div>
+      <div style="min-width:0"><div class="nm">${n}</div><div class="sub" id="trs${j}">-</div>
+        <div class="pr" id="trp${j}"></div></div>
+      <div class="plate wait" id="plate${j}">AGUARDA<small>-</small></div>
+    </div>`).join('');
+  const sell = $('pips-sell'), buy = $('pips-buy'), N = names.length, E = ep.team.enter;
+  sell.innerHTML = buy.innerHTML = '';
+  for (let j = 1; j <= N; j++) {
+    sell.insertAdjacentHTML('beforeend', `<div class="pip sell ${j === E ? 'th' : ''}" id="ps${j}"></div>`);
+    buy.insertAdjacentHTML('beforeend', `<div class="pip buy ${j === E ? 'th' : ''}" id="pb${j}"></div>`);
+  }
+  $('rule').textContent = `entra com ${E} de ${N}, mantem com ${ep.team.hold}`;
+  lastWants = [];
+}
+
+// ---------------------------------------------------------------- grafico
+function draw(full) {
+  if (!ep) return;
+  const n = ep.bars.length, k = Math.min(p, n - 1);
+  const bars = ep.bars.slice(0, k + 1), xs = bars.map((_, i) => i), st = byI.get(k), cfg = ep.config;
+  const total = Math.max(n, live() ? 565 : n);
+  let lo = Infinity, hi = -Infinity;
+  for (const b of bars) { if (b[3] < lo) lo = b[3]; if (b[2] > hi) hi = b[2]; }
+  const span = Math.max(hi - lo, 400), pad = span * 0.12;
+  const yr = [Math.floor((lo - pad) / 100) * 100, Math.ceil((hi + pad) / 100) * 100];
+
+  const traces = [{ type: 'candlestick', x: xs, open: bars.map(b => b[1]), high: bars.map(b => b[2]), low: bars.map(b => b[3]), close: bars.map(b => b[4]),
+    increasing: { line: { color: C.up, width: 1 }, fillcolor: C.up }, decreasing: { line: { color: C.down, width: 1 }, fillcolor: C.down },
+    text: bars.map(b => b[0]), hoverinfo: 'text+y', xaxis: 'x', yaxis: 'y' }];
+  const shapes = [], ann = [];
+  const done = ep.trades.filter(t => t.exit_i <= k);
+  for (const t of done) shapes.push({ type: 'line', x0: t.entry_i, x1: t.exit_i, y0: t.entry, y1: t.exit, xref: 'x', yref: 'y', line: { color: t.pts > 0 ? C.good : C.bad, width: 2 } });
+  traces.push({ type: 'scatter', mode: 'markers', x: done.map(t => t.entry_i), y: done.map(t => t.entry), xaxis: 'x', yaxis: 'y',
+      marker: { symbol: done.map(t => t.side > 0 ? 'triangle-up' : 'triangle-down'), size: 11, color: done.map(t => t.side > 0 ? C.long : C.short), line: { width: 1, color: '#000' } },
+      text: done.map(t => `MEGAZORD ${t.side > 0 ? 'COMPRA' : 'VENDE'} ${t.entry_time} @ ${fmt(t.entry)}`), hoverinfo: 'text' },
+    { type: 'scatter', mode: 'markers', x: done.map(t => t.exit_i), y: done.map(t => t.exit), xaxis: 'x', yaxis: 'y',
+      marker: { symbol: 'x', size: 9, color: done.map(t => t.pts > 0 ? C.good : C.bad) },
+      text: done.map(t => `SAIDA ${t.exit_time} @ ${fmt(t.exit)} (${t.reason}) ${sgn(t.pts)} pts`), hoverinfo: 'text' });
+  if (st && st.pos) {
+    const cur = bars[k][4];
+    shapes.push({ type: 'rect', x0: st.entry_i - .5, x1: k + .5, y0: st.entry, y1: cur, xref: 'x', yref: 'y', line: { width: 0 }, fillcolor: st.unreal >= 0 ? 'rgba(46,230,107,.18)' : 'rgba(255,77,94,.18)' });
+    shapes.push({ type: 'line', x0: st.entry_i, x1: total, y0: st.entry, y1: st.entry, xref: 'x', yref: 'y', line: { color: st.pos > 0 ? C.long : C.short, dash: 'dash', width: 1.5 } });
+    traces.push({ type: 'scatter', mode: 'markers', x: [st.entry_i], y: [st.entry], xaxis: 'x', yaxis: 'y', hoverinfo: 'skip',
+      marker: { symbol: st.pos > 0 ? 'triangle-up' : 'triangle-down', size: 16, color: st.pos > 0 ? C.long : C.short, line: { width: 1.5, color: '#fff' } } });
+    ann.push({ x: 0, xref: 'paper', xanchor: 'left', y: st.entry, yref: 'y', showarrow: false, text: `<b>MEGAZORD ${posName(st.pos)}</b> ${fmt(st.entry)}`, bgcolor: st.pos > 0 ? C.long : C.short, font: { color: '#fff', size: 11 } });
+    if (cfg.max_hold) shapes.push({ type: 'line', x0: st.entry_i + cfg.max_hold, x1: st.entry_i + cfg.max_hold, y0: 0, y1: 1, yref: 'paper', xref: 'x', line: { color: C.warn, dash: 'dot', width: 1.5 } });
+  }
+  const last = bars[k][4];
+  shapes.push({ type: 'line', x0: 0, x1: total, y0: last, y1: last, xref: 'x', yref: 'y', line: { color: C.muted, width: 1, dash: 'dot' } });
+  ann.push({ x: 1, xref: 'paper', xanchor: 'left', y: last, yref: 'y', text: `<b>${fmt(last)}</b>`, showarrow: false, bgcolor: last >= bars[k][1] ? C.up : C.down, font: { color: '#fff', family: NUMFONT } });
+  shapes.push({ type: 'line', x0: k, x1: k, y0: 0, y1: 1, yref: 'paper', xref: 'x', line: { color: C.accent, width: 1 } });
+
+  // votos ao longo do dia e corrida de placares
+  const steps = ep.steps.filter(s => s.i <= k), sx = steps.map(s => s.i), E = ep.team.enter;
+  traces.push(
+    { type: 'bar', x: sx, y: steps.map(s => s.votes.long), marker: { color: steps.map(s => s.votes.long >= E ? C.long : 'rgba(59,140,255,.35)') }, xaxis: 'x', yaxis: 'y2', hovertemplate: 'compra %{y}<extra></extra>' },
+    { type: 'bar', x: sx, y: steps.map(s => -s.votes.short), marker: { color: steps.map(s => s.votes.short >= E ? C.short : 'rgba(255,138,61,.35)') }, xaxis: 'x', yaxis: 'y2', hovertemplate: 'vende %{customdata}<extra></extra>', customdata: steps.map(s => s.votes.short) });
+  ep.team.names.forEach((nm, j) => traces.push({ type: 'scatter', x: sx, y: steps.map(s => s.tr[j].pnl), mode: 'lines', line: { color: TC[j], width: 1 }, opacity: .7, xaxis: 'x', yaxis: 'y3', hovertemplate: nm + ' %{y:.0f}<extra></extra>' }));
+  traces.push({ type: 'scatter', x: sx, y: steps.map(s => s.cum_pnl), mode: 'lines', line: { color: C.gold, width: 3 }, xaxis: 'x', yaxis: 'y3', hovertemplate: 'MEGAZORD %{y:.0f}<extra></extra>' });
+  const N = ep.team.names.length, tickvals = [], ticktext = [];
+  for (let i = 0; i < n; i += 60) { tickvals.push(i); ticktext.push(ep.bars[i][0]); }
+  const layout = { ...baseLayout, shapes: shapes.concat([
+      { type: 'line', x0: 0, x1: total, y0: E - .5, y1: E - .5, xref: 'x', yref: 'y2', line: { color: C.gold, width: 1, dash: 'dot' } },
+      { type: 'line', x0: 0, x1: total, y0: -E + .5, y1: -E + .5, xref: 'x', yref: 'y2', line: { color: C.gold, width: 1, dash: 'dot' } }]),
+    annotations: ann, margin: { l: 58, r: 70, t: 4, b: 22 }, bargap: 0, barmode: 'relative',
+    xaxis: { ...axis, range: [-2, total + 4], tickvals, ticktext, rangeslider: { visible: false }, anchor: 'y3' },
+    yaxis: { ...axis, domain: [0.38, 1], range: yr, tickformat: ',.0f', tickfont: { family: NUMFONT } },
+    yaxis2: { ...axis, domain: [0.25, 0.35], range: [-N - .2, N + .2], tickvals: [-N, 0, N], ticktext: ['V' + N, '0', 'C' + N], title: { text: 'votos', font: { size: 9 } } },
+    yaxis3: { ...axis, domain: [0, 0.22], title: { text: 'corrida', font: { size: 9 } }, tickfont: { family: NUMFONT } } };
+  if (full) Plotly.newPlot('chart', traces, layout, plotCfg); else Plotly.react('chart', traces, layout, plotCfg);
+  renderPanels(k, st, done);
+}
+
+// ---------------------------------------------------------------- paineis
+function renderPanels(k, st, done) {
+  const bar = ep.bars[k], pv = ep.point_value, cfg = ep.config, cps = ep.cost_per_side, names = ep.team.names;
+  $('scrub').value = k;
+  $('clock').textContent = `${ep.day}  ${bar[0]}  ·  ${k}/${ep.bars.length - 1}${live() ? '  ·  ' + (index.live?.updated || '') : ''}`;
+  $('now-price').textContent = fmt(bar[4]); $('now-time').textContent = bar[0];
+  const pos = st ? st.pos : 0;
+  $('pos').textContent = posName(pos); $('pos').className = 'posname ' + posCls(pos);
+  $('mzcard').className = 'card mz ' + (pos ? posCls(pos) : '');
+  if (pos !== lastPos) { $('pos').classList.remove('pop'); void $('pos').offsetWidth; $('pos').classList.add('pop'); lastPos = pos; }
+  if (st && st.pos) {
+    $('o-entry').textContent = `${ep.bars[st.entry_i][0]} ${fmt(st.entry)}`;
+    $('o-unreal').textContent = sgn(st.unreal); tone($('o-unreal'), st.unreal);
+    $('o-hold').textContent = cfg.max_hold ? `${st.bars_in_pos}/${cfg.max_hold}` : st.bars_in_pos;
+    $('hold-bar').style.width = cfg.max_hold ? Math.min(100, 100 * st.bars_in_pos / cfg.max_hold) + '%' : '0';
+  } else {
+    $('o-entry').textContent = '-'; $('o-unreal').textContent = '-'; $('o-unreal').classList.remove('good', 'bad');
+    $('o-hold').textContent = '-'; $('hold-bar').style.width = '0';
+  }
+
+  // o que cada trader quer: no ultimo candle ao vivo e a decisao pendente; senao a que gerou este candle
+  const nx = ep.next && ep.next.i === k ? ep.next : null;
+  const wants = nx ? nx.wants : st ? st.tr.map(t => t.want) : names.map(() => 0);
+  const probs = nx ? nx.probs : st ? st.tr.map(t => t.p) : names.map(() => [1, 0, 0]);
+  const votes = nx ? nx.votes : st ? st.votes : { long: 0, short: 0 };
+  names.forEach((nm, j) => {
+    const w = wants[j], pr = probs[j], conf = Math.max(...pr), plate = $('plate' + j);
+    const cls = w > 0 ? 'buy' : w < 0 ? 'sell' : 'wait';
+    plate.className = 'plate ' + cls + (lastWants[j] !== undefined && lastWants[j] !== w ? ' flip' : '');
+    plate.innerHTML = `${w > 0 ? 'COMPRA' : w < 0 ? 'VENDE' : 'AGUARDA'}<small>${fmt(conf * 100)}% certeza</small>`;
+    const t = st ? st.tr[j] : null;
+    $('trs' + j).textContent = t ? `${t.pos ? posName(t.pos).toLowerCase() + ' ' + sgn(t.unreal) + ' · ' : ''}dia ${sgn(t.pnl)} · ${t.trades} tr` : 'dia 0';
+    $('trp' + j).innerHTML = `<div style="width:${pr[1] * 100}%;background:${C.long}"></div><div style="width:${pr[0] * 100}%;background:#3a4452"></div><div style="width:${pr[2] * 100}%;background:${C.short}"></div>`;
+    $('tr' + j).className = 'tr' + (w > 0 && votes.long >= ep.team.enter ? ' agree-buy' : w < 0 && votes.short >= ep.team.enter ? ' agree-sell' : '');
+  });
+  lastWants = wants.slice();
+  const N = names.length;
+  for (let j = 1; j <= N; j++) { $('pb' + j).classList.toggle('on', votes.long >= j); $('ps' + j).classList.toggle('on', votes.short >= j); }
+  $('v-buy').textContent = `compra ${votes.long}`; $('v-sell').textContent = `vende ${votes.short}`;
+  const E = ep.team.enter, H = ep.team.hold, v = $('verdict');
+  let txt, col;
+  if (pos === 0) [txt, col] = votes.long >= E ? ['ENTRA COMPRADO', C.long] : votes.short >= E ? ['ENTRA VENDIDO', C.short] : ['FICA DE FORA', C.muted];
+  else {
+    const same = pos > 0 ? votes.long : votes.short, opp = pos > 0 ? votes.short : votes.long;
+    [txt, col] = opp >= E ? ['VIRA A MAO', C.warn] : same >= H ? ['MANTEM', pos > 0 ? C.long : C.short] : ['ZERA', C.warn];
+  }
+  v.textContent = txt; v.style.color = col;
+
+  // HUD
+  const pts = done.reduce((a, t) => a + t.pts, 0), wins = done.filter(t => t.pts > 0).length;
+  const openNet = st && st.pos ? st.unreal - 2 * cps : 0;
+  scoreTarget = pts;
+  $('score-brl').textContent = `R$ ${sgn(pts * pv, 2)} · aberto ${sgn(openNet)}`;
+  $('st-trades').textContent = done.length;
+  const wr = done.length ? Math.round(100 * wins / done.length) : 0;
+  $('st-ring').style.setProperty('--p', wr); $('st-wr').textContent = wr + '%';
+  let streak = 0;
+  for (let j = done.length - 1; j >= 0; j--) { const w = done[j].pts > 0; if (j === done.length - 1 || w === (streak > 0)) streak += w ? 1 : -1; else break; }
+  const se = $('st-streak');
+  se.textContent = streak > 1 ? `🔥${streak}` : streak < -1 ? `🧊${-streak}` : streak === 1 ? '✓1' : streak === -1 ? '✗1' : '-'; tone(se, streak);
+  if (st) {
+    const best = st.tr.map((t, j) => [t.pnl, j]).sort((a, b) => b[0] - a[0])[0];
+    $('st-mvp').innerHTML = `<span style="color:${TC[best[1]]}">${names[best[1]]}</span>`;
+  } else $('st-mvp').textContent = '-';
+  const agree = Math.max(votes.long, votes.short, N - votes.long - votes.short);
+  $('st-cons').textContent = `${agree}/${N}`;
+  $('st-cost').textContent = st ? '−' + fmt(st.cum_cost + st.cum_penalty) : '0';
+
+  if (done.length !== lastDone) {
+    const forward = done.length > lastDone && k - lastK <= 4;
+    renderChips(done, forward ? done.length - lastDone : 0);
+    if (forward) for (const t of done.slice(lastDone)) toast(t);
+    lastDone = done.length;
+  }
+  renderLeader(st);
+  lastK = k;
+}
+
+function tickScore() {
+  const d = scoreTarget - shownScore;
+  shownScore = Math.abs(d) < 1 ? scoreTarget : shownScore + d * 0.18;
+  const el = $('score'); el.textContent = sgn(Math.round(shownScore)); tone(el, Math.round(shownScore));
+}
+
+function renderChips(done, fresh) {
+  const box = $('chips');
+  if (!done.length) { box.innerHTML = '<div class="empty">o Megazord ainda nao fechou nenhum trade hoje</div>'; return; }
+  box.innerHTML = done.slice().reverse().slice(0, 40).map((t, j) => `
+    <div class="chip ${t.pts > 0 ? 'win' : 'loss'} ${j < fresh ? 'new' : ''}">
+      <span class="dir" style="color:${t.side > 0 ? C.long : C.short}">${t.side > 0 ? '▲' : '▼'}</span>
+      <span class="meta">#${done.length - j} ${t.entry_time}→${t.exit_time} ${REASON[t.reason] || ''}</span>
+      <span class="pts ${t.pts > 0 ? 'good' : 'bad'}">${sgn(t.pts)}</span>
+      <span class="meta" style="grid-column:2/4">${fmt(t.entry)} → ${fmt(t.exit)} · R$ ${sgn(t.brl, 2)}</span>
+    </div>`).join('');
+}
+
+function toast(t) {
+  const el = document.createElement('div'), win = t.pts > 0;
+  el.className = 'toast'; el.style.color = win ? C.good : C.bad;
+  el.innerHTML = `${sgn(t.pts)} pts${Math.abs(t.pts) >= 200 ? (win ? ' 🚀' : ' 💥') : ''}<small>MEGAZORD ${t.side > 0 ? 'compra' : 'venda'} · ${REASON[t.reason] || ''} ${t.reason}</small>`;
+  $('toasts').appendChild(el); setTimeout(() => el.remove(), 1700);
+}
+
+function renderLeader(st) {
+  const names = ep.team.names;
+  const rows = names.map((n, j) => ({ n, c: TC[j], v: st ? st.tr[j].pnl : 0 }));
+  rows.push({ n: 'MEGAZORD', c: C.gold, v: st ? st.cum_pnl : 0, mz: true });
+  rows.sort((a, b) => b.v - a.v);
+  const m = Math.max(200, ...rows.map(r => Math.abs(r.v)));
+  $('leader').innerHTML = rows.map((r, j) => {
+    const w = 50 * Math.abs(r.v) / m;
+    return `<div class="row"><span class="nm" style="color:${r.c}">${j === 0 ? '👑 ' : ''}${r.n}</span>
+      <div class="bar"><div class="mid"></div><div style="${r.v >= 0 ? 'left:50%' : 'right:50%'};width:${w}%;background:${r.mz ? C.gold : r.c}"></div></div>
+      <span class="v ${r.v > 0 ? 'good' : r.v < 0 ? 'bad' : ''}">${sgn(r.v)}</span></div>`;
+  }).join('');
+}
+
+// ---------------------------------------------------------------- painel do time (treino / historico)
+function renderTeam() {
+  const t = index.team;
+  const box = $('teampanel'), learn = $('learn');
+  if (index.mode === 'treino' && t) {
+    learn.style.display = 'none'; box.style.display = '';
+    $('team-title').textContent = `Treino · rodada ${t.round} · ${t.phase}`;
+    box.innerHTML = t.traders.map((tr, j) => {
+      const prog = tr.steps_total ? Math.min(1, (tr.steps_done || 0) / tr.steps_total) : 0;
+      const ph = tr.phase === 'prova' ? '📝 prova' : tr.phase === 'pronto' ? (tr.promoted ? '🏆 promovido' : '✓ pronto') : '📚 estudando';
+      return `<div class="row" style="grid-template-columns:62px minmax(0,1fr) 120px">
+        <span class="nm" style="color:${TC[j]}">${tr.name}</span>
+        <div class="bar"><div style="left:0;width:${prog * 100}%;background:${TC[j]}"></div></div>
+        <span class="v" style="font-weight:600">${ph} ${tr.champion_pts_dia != null ? sgn(tr.champion_pts_dia) + '/d' : ''}</span></div>`;
+    }).join('') + `<div class="row" style="grid-template-columns:1fr;color:var(--muted);font-size:11px;margin-top:2px">
+      ${t.last_eval ? `ultima prova do time (${t.last_eval.days} pregoes nunca vistos): Megazord ${sgn(t.last_eval.mz_pts)} pts · ${t.last_eval.mz_trades} trades` : 'cada trader estuda, faz prova na validacao e so vota se for melhor que a versao anterior'}</div>`;
+    return;
+  }
+  // ao vivo: ficha do time (o placar do dia ja esta no painel do meio)
+  if (live() && t?.static) {
+    $('team-title').textContent = 'Ficha do time · campeoes que estao votando';
+    box.innerHTML = t.static.map((r, j) => `<div class="row" style="grid-template-columns:62px minmax(0,1fr) 92px">
+      <span class="nm" style="color:${TC[j]}">${r.name}</span>
+      <span class="dim" style="font-size:11px;white-space:nowrap;overflow:hidden">${r.rounds} rodada(s) · 🏆 ${r.promotions} promocao(oes)${r.steps ? ' · ' + fmt(r.steps / 1e6, 1) + 'M passos' : ''}</span>
+      <span class="v">${r.val_pts_dia != null ? sgn(r.val_pts_dia) + '/dia' : 'sem prova'}</span></div>`).join('');
+    return;
+  }
+  // replay: placar acumulado de todos os pregoes publicados
+  const eps = index.episodes;
+  if (!eps.length || !eps[0].traders) { box.innerHTML = ''; return; }
+  const names = eps[0].traders.map(x => x.name);
+  const tot = names.map((n, j) => ({ n, c: TC[j], v: eps.reduce((a, e) => a + (e.traders?.[j]?.pnl_pts || 0), 0) }));
+  tot.push({ n: 'MEGAZORD', c: C.gold, v: eps.reduce((a, e) => a + e.pnl_pts, 0), mz: true });
+  tot.sort((a, b) => b.v - a.v);
+  const m = Math.max(200, ...tot.map(r => Math.abs(r.v)));
+  $('team-title').textContent = live() ? 'Placar de hoje (ao vivo)' : `Placar acumulado · ${eps.length} pregoes`;
+  box.innerHTML = tot.map((r, j) => `<div class="row"><span class="nm" style="color:${r.c}">${j === 0 ? '👑 ' : ''}${r.n}</span>
+      <div class="bar"><div class="mid"></div><div style="${r.v >= 0 ? 'left:50%' : 'right:50%'};width:${50 * Math.abs(r.v) / m}%;background:${r.mz ? C.gold : r.c}"></div></div>
+      <span class="v ${r.v > 0 ? 'good' : r.v < 0 ? 'bad' : ''}">${sgn(r.v)}</span></div>`).join('');
+}
+
+// ---------------------------------------------------------------- controles
+function setPlaying(v) { playing = v; $('play').textContent = v ? '⏸' : '⏵'; }
+$('play').onclick = () => { if (ep && p >= ep.bars.length - 1 && !live()) { p = 0; lastDone = 0; lastK = -1; } setPlaying(!playing); };
+$('prev').onclick = () => { setPlaying(false); $('follow').checked = false; p = Math.max(0, p - 1); draw(); };
+$('next').onclick = () => { setPlaying(false); p = Math.min(ep.bars.length - 1, p + 1); draw(); };
+$('scrub').oninput = e => { setPlaying(false); if (live()) $('follow').checked = false; p = +e.target.value; draw(); };
+$('speed').oninput = e => { $('speedv').textContent = e.target.value; };
+$('episode').onchange = e => { $('follow').checked = false; loadEpisode(+e.target.value).then(() => setPlaying(true)); };
+$('follow').onchange = e => { if (e.target.checked && live() && ep) { p = ep.bars.length - 1; draw(); } };
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT') return;
+  if (e.code === 'Space') { e.preventDefault(); $('play').click(); }
+  if (e.code === 'ArrowRight') $('next').click();
+  if (e.code === 'ArrowLeft') $('prev').click();
+});
+
+function loop(ts) {
+  tickScore();
+  if (ep && playing && !(live() && $('follow').checked)) {
+    const interval = 1000 / +$('speed').value;
+    if (ts - lastTick >= interval) {
+      const adv = Math.max(1, Math.floor((ts - lastTick) / interval));
+      lastTick = ts;
+      if (p < ep.bars.length - 1) { p = Math.min(ep.bars.length - 1, p + adv); draw(); }
+      else if (index.mode === 'replay' && $('follow').checked) {
+        const nxt = index.episodes.find(e => e.id === epId + 1);
+        if (nxt) loadEpisode(nxt.id);
+      }
+    }
+  }
+  requestAnimationFrame(loop);
+}
+pollIndex(); setInterval(pollIndex, 1500); requestAnimationFrame(loop);
+</script>
+</body>
+</html>

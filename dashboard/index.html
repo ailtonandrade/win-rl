@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WIN RL ao vivo</title>
+<script src="plotly.min.js"></script>
+<style>
+  :root {
+    --bg: #07090d; --panel: #10151d; --panel2: #151c26; --line: #222b38; --text: #e6edf3; --muted: #7d8794;
+    --up: #26a69a; --down: #ef5350; --long: #3b8cff; --short: #ff8a3d; --flat: #7d8794;
+    --good: #2ee66b; --bad: #ff4d5e; --accent: #b07cff; --warn: #ffc53d; --gold: #ffd166;
+    --num: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+    --hud-h: 76px; --bottom-h: clamp(150px, 23vh, 230px); --side-w: clamp(290px, 23vw, 360px); --gap: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: radial-gradient(1200px 600px at 30% -10%, #121a2a 0%, var(--bg) 60%) fixed;
+         color: var(--text); font: 13px/1.3 "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  .app { height: 100vh; display: grid; gap: var(--gap); padding: var(--gap);
+         grid-template-rows: var(--hud-h) minmax(0, 1fr) var(--bottom-h);
+         grid-template-columns: minmax(0, 1fr) var(--side-w);
+         grid-template-areas: "hud hud" "chart side" "bottom bottom"; }
+  .card { background: linear-gradient(180deg, var(--panel2), var(--panel)); border: 1px solid var(--line);
+          border-radius: 10px; min-width: 0; min-height: 0; position: relative; overflow: hidden; }
+  .card h2 { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+             margin: 0; padding: 7px 10px 0; font-weight: 700; }
+  .num { font-family: var(--num); font-variant-numeric: tabular-nums; }
+  .good { color: var(--good) !important; } .bad { color: var(--bad) !important; } .dim { color: var(--muted); }
+
+  /* ---------------- HUD */
+  .hud { grid-area: hud; display: grid; align-items: center; gap: 10px; padding: 0 12px;
+         grid-template-columns: 210px 230px minmax(0, 1fr) auto; }
+  .brand .t { font-weight: 800; font-size: 15px; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand .s { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 10px; font-weight: 800;
+           text-transform: uppercase; letter-spacing: .06em; margin-right: 6px; }
+  .b-treino { background: #3d2466; color: #d8b4ff; box-shadow: 0 0 12px #8b5cf655; animation: pulse 2s infinite; }
+  .b-assistir { background: #12325c; color: #8cc8ff; }
+  @keyframes pulse { 50% { box-shadow: 0 0 2px #8b5cf600; } }
+  .score { text-align: center; border-left: 1px solid var(--line); border-right: 1px solid var(--line); height: 100%;
+           display: flex; flex-direction: column; justify-content: center; }
+  .score .lbl { font-size: 10px; letter-spacing: .14em; color: var(--muted); font-weight: 700; }
+  .score .v { font: 800 30px/1 var(--num); text-shadow: 0 0 18px currentColor; }
+  .score .brl { font: 600 12px var(--num); color: var(--muted); }
+  .stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+  .stat { text-align: center; min-width: 0; }
+  .stat .lbl { font-size: 9.5px; letter-spacing: .1em; color: var(--muted); font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+  .stat .v { font: 700 17px/1.3 var(--num); white-space: nowrap; }
+  .ring { width: 40px; height: 40px; border-radius: 50%; margin: 0 auto; display: grid; place-items: center;
+          background: conic-gradient(var(--good) calc(var(--p) * 1%), #2a3340 0); }
+  .ring > span { width: 31px; height: 31px; border-radius: 50%; background: var(--panel); display: grid; place-items: center;
+                 font: 700 11px var(--num); }
+  .xp { height: 6px; background: #0b0f15; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .xp > div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--long)); transition: width .4s; }
+  .controls { display: flex; gap: 6px; align-items: center; }
+  select, button { background: #0b0f15; color: var(--text); border: 1px solid var(--line); border-radius: 7px;
+                   padding: 5px 8px; font: inherit; }
+  select { width: 220px; }
+  button { cursor: pointer; min-width: 34px; } button:hover { border-color: var(--muted); }
+  .speed { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--muted); width: 92px; }
+  .speed input { width: 92px; }
+  .follow { font-size: 10px; color: var(--muted); display: flex; gap: 4px; align-items: center; white-space: nowrap; }
+
+  /* ---------------- grafico */
+  .chartcard { grid-area: chart; }
+  .plot { position: absolute; inset: 26px 6px 22px 6px; }
+  .timeline { position: absolute; left: 66px; right: 76px; bottom: 6px; height: 12px; }
+  .timeline input { width: 100%; margin: 0; accent-color: var(--accent); }
+  .clock { position: absolute; top: 6px; right: 12px; font: 600 12px var(--num); color: var(--muted); }
+  .toasts { position: absolute; left: 50%; top: 32%; transform: translateX(-50%); pointer-events: none; z-index: 3; }
+  .toast { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; font: 900 40px/1 var(--num);
+           text-shadow: 0 0 24px currentColor, 0 2px 0 #000; animation: rise 1.6s ease-out forwards; }
+  .toast small { display: block; text-align: center; font: 700 13px "Segoe UI", sans-serif; opacity: .9; }
+  @keyframes rise { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.6); }
+                    15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); }
+                    30% { transform: translate(-50%, 0) scale(1); }
+                    100% { opacity: 0; transform: translate(-50%, -70px) scale(1); } }
+
+  /* ---------------- lateral */
+  .side { grid-area: side; display: grid; gap: var(--gap); min-height: 0;
+          grid-template-rows: 92px minmax(0, 1fr) 118px 112px; }
+  .poscard { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 10px 12px; transition: box-shadow .3s, border-color .3s; }
+  .poscard.long { border-color: var(--long); box-shadow: 0 0 22px #3b8cff55 inset; }
+  .poscard.short { border-color: var(--short); box-shadow: 0 0 22px #ff8a3d55 inset; }
+  .posname { font: 900 24px/1 "Segoe UI", sans-serif; letter-spacing: .04em; }
+  .posname.long { color: var(--long); } .posname.short { color: var(--short); } .posname.flat { color: var(--flat); }
+  .possub { font-size: 11px; color: var(--muted); margin-top: 5px; height: 14px; white-space: nowrap; overflow: hidden; }
+  .price { text-align: right; }
+  .price .v { font: 800 24px/1 var(--num); }
+  .price .t { font: 600 11px var(--num); color: var(--muted); margin-top: 4px; }
+  .pop { animation: pop .35s; } @keyframes pop { 40% { transform: scale(1.12); } }
+
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; padding: 6px 10px 0; }
+  .kv > span:nth-child(odd) { color: var(--muted); white-space: nowrap; }
+  .kv > span:nth-child(even) { text-align: right; font-family: var(--num); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hold { padding: 6px 10px 0; }
+  .hold .lbl { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+  .bar { height: 8px; background: #0b0f15; border-radius: 4px; overflow: hidden; margin-top: 3px; }
+  .bar > div { height: 100%; transition: width .15s; }
+  .unreal { font: 800 26px/1 var(--num); text-align: center; padding: 6px 0 0; text-shadow: 0 0 14px currentColor; }
+
+  .prob { display: grid; grid-template-columns: 62px 1fr 40px; gap: 6px; align-items: center; margin: 5px 10px 0; font-size: 12px; }
+  .prob .bar { height: 13px; margin: 0; }
+  .prob .p { text-align: right; font-family: var(--num); }
+  .prob.chosen span:first-child { font-weight: 800; }
+  .prob.chosen .bar { box-shadow: 0 0 10px #ffffff33; }
+  .note { font-size: 11px; color: var(--muted); padding: 5px 10px 0; height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ---------------- rodape */
+  .bottom { grid-area: bottom; display: grid; gap: var(--gap); grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
+  .chips { position: absolute; inset: 26px 8px 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+           grid-auto-rows: 44px; gap: 6px; overflow: hidden; align-content: start; }
+  .chip { border-radius: 8px; padding: 4px 8px; background: #0b0f15; border: 1px solid var(--line); display: grid;
+          grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; column-gap: 6px; font-size: 11px; }
+  .chip .dir { font-weight: 900; grid-row: span 2; align-self: center; font-size: 16px; }
+  .chip .pts { font: 800 14px var(--num); text-align: right; }
+  .chip .meta { color: var(--muted); font-family: var(--num); white-space: nowrap; overflow: hidden; }
+  .chip.win { border-color: #2ee66b66; } .chip.loss { border-color: #ff4d5e55; }
+  .chip.new { animation: chipin .5s; } @keyframes chipin { from { transform: scale(.7); opacity: 0; } }
+  .empty { color: var(--muted); font-size: 12px; padding: 8px 2px; }
+
+  /* tela pequena: deixa rolar em vez de espremer */
+  @media (max-width: 1100px), (max-height: 600px) {
+    body { overflow: auto; }
+    .app { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 480px auto auto;
+           grid-template-areas: "hud" "chart" "side" "bottom"; }
+    .hud { grid-template-columns: 1fr; padding: 8px 12px; }
+    .score { border: 0; }
+    .side { grid-template-rows: 92px 210px 118px 112px; }
+    .bottom { grid-template-columns: minmax(0, 1fr); grid-auto-rows: 200px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HUD -->
+  <div class="card hud">
+    <div class="brand">
+      <div class="t" id="title">WIN RL</div>
+      <div class="s"><span id="mode" class="badge"></span><span id="sub"></span></div>
+      <div class="xp"><div id="xp" style="width:0"></div></div>
+    </div>
+    <div class="score">
+      <div class="lbl">PLACAR DO DIA</div>
+      <div class="v num" id="score">0</div>
+      <div class="brl" id="score-brl">R$ 0,00 · aberto 0</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="lbl">trades</div><div class="v" id="st-trades">0</div></div>
+      <div class="stat"><div class="lbl">acerto</div><div class="ring" id="st-ring" style="--p:0"><span id="st-wr">0%</span></div></div>
+      <div class="stat"><div class="lbl">sequencia</div><div class="v" id="st-streak">-</div></div>
+      <div class="stat"><div class="lbl">melhor</div><div class="v good" id="st-best">-</div></div>
+      <div class="stat"><div class="lbl">pior</div><div class="v bad" id="st-worst">-</div></div>
+      <div class="stat"><div class="lbl">custos</div><div class="v bad" id="st-cost">0</div></div>
+    </div>
+    <div class="controls">
+      <div>
+        <select id="episode" title="pregao"></select>
+        <label class="follow"><input type="checkbox" id="follow" checked> seguir o mais novo</label>
+      </div>
+      <button id="prev" title="candle anterior (←)">‹</button>
+      <button id="play" title="tocar/pausar (espaco)">⏸</button>
+      <button id="next" title="proximo candle (→)">›</button>
+      <div class="speed"><input type="range" id="speed" min="1" max="60" value="8"><span><b id="speedv">8</b> candles/s</span></div>
+    </div>
+  </div>
+
+  <!-- grafico -->
+  <div class="card chartcard">
+    <h2>Mini indice M1 · o agente decide no fechamento de cada candle</h2>
+    <div class="clock" id="clock"></div>
+    <div class="plot" id="chart"></div>
+    <div class="toasts" id="toasts"></div>
+    <div class="timeline"><input type="range" id="scrub" min="0" max="0" value="0" title="posicao no pregao"></div>
+  </div>
+
+  <!-- lateral -->
+  <div class="side">
+    <div class="card poscard" id="poscard">
+      <div>
+        <div class="posname flat" id="pos">ZERADO</div>
+        <div class="possub" id="possub">esperando oportunidade</div>
+      </div>
+      <div class="price"><div class="v" id="now-price">-</div><div class="t" id="now-time">--:--</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Trade aberto</h2>
+      <div class="unreal dim" id="unreal">--</div>
+      <div class="kv">
+        <span>entrada</span><span id="o-entry">-</span>
+        <span>se sair agora</span><span id="o-net">-</span>
+        <span>melhor momento</span><span id="o-mfe" class="good">-</span>
+        <span>pior momento</span><span id="o-mae" class="bad">-</span>
+      </div>
+      <div class="hold">
+        <div class="lbl"><span>tempo em posicao</span><span id="hold-label" class="num">-</span></div>
+        <div class="bar"><div id="hold-bar" style="width:0;background:var(--warn)"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Cerebro do agente · o que ele quer agora</h2>
+      <div id="probs"></div>
+      <div class="note" id="decision-note"></div>
+    </div>
+
+    <div class="card">
+      <h2>Reward deste candle</h2>
+      <div class="kv">
+        <span>reward (x100)</span><span id="r-reward">-</span>
+        <span>movimento</span><span id="r-gross">-</span>
+        <span>custo</span><span id="r-cost">-</span>
+        <span>penalidade</span><span id="r-pen">-</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- rodape -->
+  <div class="bottom">
+    <div class="card"><h2>Trades do dia (mais recente primeiro)</h2><div class="chips" id="chips"></div></div>
+    <div class="card"><h2 id="days-title">Pregoes</h2><div class="plot" id="days" style="inset:24px 4px 4px"></div></div>
+    <div class="card"><h2 id="learn-title">Aprendizado</h2><div class="plot" id="learn" style="inset:24px 4px 4px"></div></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const C = { up: css('--up'), down: css('--down'), long: css('--long'), short: css('--short'), flat: css('--flat'),
+            good: css('--good'), bad: css('--bad'), accent: css('--accent'), warn: css('--warn'), gold: css('--gold'),
+            muted: css('--muted'), line: css('--line'), text: css('--text') };
+const fmt = (v, d = 0) => v == null || isNaN(v) ? '-' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const sgn = (v, d = 0) => v == null || isNaN(v) ? '-' : (v > 0 ? '+' : v < 0 ? '−' : '') + fmt(Math.abs(v), d);
+const tone = (el, v) => { el.classList.toggle('good', v > 0); el.classList.toggle('bad', v < 0); };
+const posName = p => p > 0 ? 'COMPRADO' : p < 0 ? 'VENDIDO' : 'ZERADO';
+const posCls = p => p > 0 ? 'long' : p < 0 ? 'short' : 'flat';
+const REASON = { 'agente': '🤖', 'tempo max': '⏱', 'fim do dia': '🔔' };
+
+let index = null, ep = null, epId = null, p = 0, playing = true, lastTick = 0, lastIndexStamp = 0;
+let shownScore = 0, lastDone = 0, lastPos = 0, lastK = -1;
+
+const NUMFONT = 'Cascadia Mono, Consolas, monospace';
+const baseLayout = {
+  autosize: true, paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+  font: { color: C.text, size: 11 }, showlegend: false, hovermode: 'x unified',
+  hoverlabel: { bgcolor: '#0b0f15', bordercolor: C.line, font: { family: NUMFONT } },
+};
+const axis = { gridcolor: '#1b2330', zerolinecolor: C.line, linecolor: C.line, automargin: false, fixedrange: true };
+const plotCfg = { displayModeBar: false, responsive: true };
+
+async function getJSON(url) {
+  const r = await fetch(url + '?t=' + Date.now());
+  if (!r.ok) throw new Error(url + ' ' + r.status);
+  return r.json();
+}
+
+// ------------------------------------------------------------------ dados
+async function pollIndex() {
+  try {
+    const idx = await getJSON('data/index.json');
+    if (idx.updated === lastIndexStamp) return;
+    lastIndexStamp = idx.updated;
+    const first = !index;
+    index = idx;
+    $('title').textContent = idx.title;
+    $('mode').textContent = idx.mode === 'treino' ? 'treinando' : 'replay';
+    $('mode').className = 'badge b-' + idx.mode;
+    renderEpisodeList();
+    renderLearning();
+    renderDays();
+    renderXP();
+    const newest = idx.episodes.at(-1);
+    if (!newest) return;
+    if (first || !ep || ($('follow').checked && idx.mode === 'treino' && newest.id !== epId && p >= ep.bars.length - 1)) {
+      await loadEpisode(idx.mode === 'assistir' && first ? idx.episodes[0].id : newest.id);
+    }
+  } catch (e) { $('clock').textContent = 'aguardando dados... rode um dos .bat'; }
+}
+
+function renderEpisodeList() {
+  $('episode').innerHTML = index.episodes.map(e =>
+    `<option value="${e.id}">${e.timesteps != null ? fmt(e.timesteps / 1000) + 'k · ' : ''}${e.day} · ${sgn(e.pnl_pts)} pts</option>`).join('');
+  if (epId != null) $('episode').value = epId;
+}
+
+function renderXP() {
+  const n = index.episodes.length;
+  if (index.mode === 'treino') {
+    const ts = index.metrics.at(-1)?.timesteps ?? 0, total = index.config?.steps || 1;
+    $('sub').textContent = `nivel ${index.metrics.length} · ${fmt(ts / 1000)}k / ${fmt(total / 1000)}k passos`;
+    $('xp').style.width = Math.min(100, 100 * ts / total) + '%';
+  } else {
+    const pos = index.episodes.findIndex(e => e.id === epId) + 1;
+    $('sub').textContent = `pregao ${pos || '-'} de ${n}`;
+    $('xp').style.width = n ? (100 * pos / n) + '%' : '0';
+  }
+}
+
+async function loadEpisode(id) {
+  const meta = index.episodes.find(e => e.id === id);
+  if (!meta) return;
+  ep = await getJSON('data/' + meta.file);
+  epId = id;
+  $('episode').value = id;
+  p = 0; lastDone = 0; lastPos = 0; lastK = -1; shownScore = 0;
+  $('scrub').max = ep.bars.length - 1;
+  $('chips').innerHTML = '';
+  Plotly.purge('chart');
+  draw(true);
+  renderXP();
+}
+
+// ------------------------------------------------------------------ grafico principal
+const stateAt = k => k > 0 ? ep.steps[k - 1] : null;
+
+function draw(full) {
+  if (!ep) return;
+  const n = ep.bars.length, k = Math.min(p, n - 1);
+  const bars = ep.bars.slice(0, k + 1), xs = bars.map((_, i) => i);
+  const st = stateAt(k), cfg = ep.config;
+  // eixo de preco do DIA INTEIRO ate aqui, com folga fixa: nao fica pulando a cada candle
+  let lo = Infinity, hi = -Infinity;
+  for (const b of bars) { if (b[3] < lo) lo = b[3]; if (b[2] > hi) hi = b[2]; }
+  const span = Math.max(hi - lo, 400), pad = span * 0.12;
+  const yr = [Math.floor((lo - pad) / 100) * 100, Math.ceil((hi + pad) / 100) * 100];
+
+  const traces = [{
+    type: 'candlestick', x: xs, open: bars.map(b => b[1]), high: bars.map(b => b[2]), low: bars.map(b => b[3]), close: bars.map(b => b[4]),
+    increasing: { line: { color: C.up, width: 1 }, fillcolor: C.up }, decreasing: { line: { color: C.down, width: 1 }, fillcolor: C.down },
+    text: bars.map(b => b[0]), hoverinfo: 'text+y', xaxis: 'x', yaxis: 'y',
+  }];
+  const shapes = [], ann = [];
+  const done = ep.trades.filter(t => t.exit_i <= k);
+  for (const t of done) {
+    shapes.push({ type: 'line', x0: t.entry_i, x1: t.exit_i, y0: t.entry, y1: t.exit, xref: 'x', yref: 'y',
+                  line: { color: t.pts > 0 ? C.good : C.bad, width: 2 } });
+  }
+  traces.push({
+    type: 'scatter', mode: 'markers', x: done.map(t => t.entry_i), y: done.map(t => t.entry), xaxis: 'x', yaxis: 'y',
+    marker: { symbol: done.map(t => t.side > 0 ? 'triangle-up' : 'triangle-down'), size: 10,
+              color: done.map(t => t.side > 0 ? C.long : C.short), line: { width: 1, color: '#000' } },
+    text: done.map(t => `${t.side > 0 ? 'COMPRA' : 'VENDA'} ${t.entry_time} @ ${fmt(t.entry)}`), hoverinfo: 'text',
+  }, {
+    type: 'scatter', mode: 'markers', x: done.map(t => t.exit_i), y: done.map(t => t.exit), xaxis: 'x', yaxis: 'y',
+    marker: { symbol: 'x', size: 9, color: done.map(t => t.pts > 0 ? C.good : C.bad) },
+    text: done.map(t => `SAIDA ${t.exit_time} @ ${fmt(t.exit)} (${t.reason}) ${sgn(t.pts)} pts`), hoverinfo: 'text',
+  });
+  if (st && st.pos) {
+    const cur = bars[k][4];
+    shapes.push({ type: 'rect', x0: st.entry_i - .5, x1: k + .5, y0: st.entry, y1: cur, xref: 'x', yref: 'y', line: { width: 0 },
+                  fillcolor: st.unreal >= 0 ? 'rgba(46,230,107,.18)' : 'rgba(255,77,94,.18)' });
+    shapes.push({ type: 'line', x0: st.entry_i, x1: n, y0: st.entry, y1: st.entry, xref: 'x', yref: 'y',
+                  line: { color: st.pos > 0 ? C.long : C.short, dash: 'dash', width: 1.5 } });
+    traces.push({ type: 'scatter', mode: 'markers', x: [st.entry_i], y: [st.entry], xaxis: 'x', yaxis: 'y', hoverinfo: 'skip',
+      marker: { symbol: st.pos > 0 ? 'triangle-up' : 'triangle-down', size: 16, color: st.pos > 0 ? C.long : C.short, line: { width: 1.5, color: '#fff' } } });
+    ann.push({ x: 0, xref: 'paper', xanchor: 'left', y: st.entry, yref: 'y', showarrow: false,
+               text: `<b>${posName(st.pos)}</b> ${fmt(st.entry)}`, bgcolor: st.pos > 0 ? C.long : C.short, font: { color: '#fff', size: 11 } });
+    if (cfg.max_hold) {
+      const xf = st.entry_i + cfg.max_hold;
+      shapes.push({ type: 'line', x0: xf, x1: xf, y0: 0, y1: 1, yref: 'paper', xref: 'x', line: { color: C.warn, dash: 'dot', width: 1.5 } });
+    }
+  }
+  const last = bars[k][4];
+  shapes.push({ type: 'line', x0: 0, x1: n, y0: last, y1: last, xref: 'x', yref: 'y', line: { color: C.muted, width: 1, dash: 'dot' } });
+  ann.push({ x: 1, xref: 'paper', xanchor: 'left', y: last, yref: 'y', text: `<b>${fmt(last)}</b>`, showarrow: false,
+             bgcolor: last >= bars[k][1] ? C.up : C.down, font: { color: '#fff', family: NUMFONT } });
+  shapes.push({ type: 'line', x0: k, x1: k, y0: 0, y1: 1, yref: 'paper', xref: 'x', line: { color: C.accent, width: 1 } });
+
+  const steps = ep.steps.slice(0, k), sx = steps.map(s => s.i), pr = j => steps.map(s => s.probs[j]);
+  traces.push(
+    { type: 'scatter', x: sx, y: pr(0), stackgroup: 'p', line: { width: 0 }, fillcolor: 'rgba(125,135,148,.45)', xaxis: 'x', yaxis: 'y2', hovertemplate: 'zerado %{y:.0%}<extra></extra>' },
+    { type: 'scatter', x: sx, y: pr(1), stackgroup: 'p', line: { width: 0 }, fillcolor: 'rgba(59,140,255,.65)', xaxis: 'x', yaxis: 'y2', hovertemplate: 'comprar %{y:.0%}<extra></extra>' },
+    { type: 'scatter', x: sx, y: pr(2), stackgroup: 'p', line: { width: 0 }, fillcolor: 'rgba(255,138,61,.65)', xaxis: 'x', yaxis: 'y2', hovertemplate: 'vender %{y:.0%}<extra></extra>' },
+    { type: 'scatter', x: sx, y: steps.map(s => s.cum_pnl), mode: 'lines',
+      line: { color: C.gold, width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(255,209,102,.08)', xaxis: 'x', yaxis: 'y3',
+      hovertemplate: 'placar marcado a mercado %{y:.0f} pts<extra></extra>' },
+    { type: 'scatter', x: sx, y: steps.map(s => s.cum_reward * 100), mode: 'lines', line: { color: C.accent, width: 1.5, dash: 'dot' },
+      xaxis: 'x', yaxis: 'y3', hovertemplate: 'reward acumulado (x100) %{y:.0f}<extra></extra>' },
+  );
+  const tickvals = [], ticktext = [];
+  for (let i = 0; i < n; i += 60) { tickvals.push(i); ticktext.push(ep.bars[i][0]); }
+  const layout = {
+    ...baseLayout, shapes, annotations: ann, margin: { l: 58, r: 70, t: 4, b: 22 },
+    xaxis: { ...axis, range: [-2, n + 4], tickvals, ticktext, rangeslider: { visible: false }, anchor: 'y3' },
+    yaxis: { ...axis, domain: [0.36, 1], range: yr, tickformat: ',.0f', tickfont: { family: NUMFONT } },
+    yaxis2: { ...axis, domain: [0.25, 0.33], range: [0, 1], tickvals: [0, .5, 1], tickformat: '.0%', title: { text: 'quer', font: { size: 9 } } },
+    yaxis3: { ...axis, domain: [0, 0.22], title: { text: 'placar', font: { size: 9 } }, tickfont: { family: NUMFONT } },
+  };
+  if (full) Plotly.newPlot('chart', traces, layout, plotCfg);
+  else Plotly.react('chart', traces, layout, plotCfg);
+
+  renderPanels(k, st, done);
+}
+
+// ------------------------------------------------------------------ paineis
+function renderPanels(k, st, done) {
+  const bar = ep.bars[k], pv = ep.point_value, cfg = ep.config, cps = ep.cost_per_side;
+  $('scrub').value = k;
+  $('clock').textContent = `${ep.day}  ${bar[0]}  ·  ${k}/${ep.bars.length - 1}`;
+  $('now-price').textContent = fmt(bar[4]);
+  $('now-time').textContent = bar[0];
+  const pos = st ? st.pos : 0;
+  const pc = $('poscard'), pn = $('pos');
+  pn.textContent = posName(pos);
+  pn.className = 'posname ' + posCls(pos);
+  pc.className = 'card poscard ' + (pos ? posCls(pos) : '');
+  if (pos !== lastPos) { pn.classList.remove('pop'); void pn.offsetWidth; pn.classList.add('pop'); lastPos = pos; }
+
+  // trade aberto (sempre as mesmas linhas: nada aparece/some, so muda o texto)
+  if (st && st.pos) {
+    $('possub').textContent = `desde ${ep.bars[st.entry_i][0]} · ${st.bars_in_pos} candle(s)`;
+    const u = $('unreal'); u.textContent = `${sgn(st.unreal)} pts`; u.className = 'unreal'; tone(u, st.unreal);
+    $('o-entry').textContent = `${ep.bars[st.entry_i][0]} @ ${fmt(st.entry)}`;
+    const net = st.unreal - 2 * cps; const o = $('o-net'); o.textContent = `${sgn(net, 1)} pts · R$ ${sgn(net * pv, 2)}`; tone(o, net);
+    $('o-mfe').textContent = `${sgn(st.mfe)} pts`;
+    $('o-mae').textContent = `${sgn(st.mae)} pts`;
+    const mx = cfg.max_hold || 0;
+    $('hold-label').textContent = mx ? `${st.bars_in_pos}/${mx} · sai em ${Math.max(mx - st.bars_in_pos, 0)}` : `${st.bars_in_pos} candles`;
+    $('hold-bar').style.width = mx ? Math.min(100, 100 * st.bars_in_pos / mx) + '%' : '0';
+    $('hold-bar').style.background = mx && st.bars_in_pos >= mx - 3 ? C.bad : C.warn;
+  } else {
+    $('possub').textContent = k ? 'esperando oportunidade' : 'abertura do pregao';
+    const u = $('unreal'); u.textContent = '--'; u.className = 'unreal dim';
+    for (const id of ['o-entry', 'o-net', 'o-mfe', 'o-mae']) { $(id).textContent = '-'; }
+    $('o-net').classList.remove('good', 'bad');
+    $('hold-label').textContent = '-';
+    $('hold-bar').style.width = '0';
+  }
+
+  // cerebro
+  const names = ['Zerar', 'Comprar', 'Vender'], cols = [C.flat, C.long, C.short];
+  const probs = st ? st.probs : [1 / 3, 1 / 3, 1 / 3];
+  const chosen = st ? probs.indexOf(Math.max(...probs)) : -1;
+  $('probs').innerHTML = probs.map((v, j) => `<div class="prob ${j === chosen ? 'chosen' : ''}">
+    <span>${names[j]}</span><div class="bar"><div style="width:${v * 100}%;background:${cols[j]}"></div></div><span class="p">${st ? fmt(v * 100) + '%' : '-'}</span></div>`).join('');
+  let note = st ? `confianca ${fmt(Math.max(...probs) * 100)}%` : 'decide no fechamento deste candle';
+  if (st && st.want !== st.pos) {
+    note += st.timed_out ? ' · ⏱ zerado pelo tempo maximo'
+      : (cfg.min_hold && st.pos && st.bars_in_pos <= cfg.min_hold) ? ' · segurando (tempo minimo)' : ' · bloqueado pela regra do horario';
+  }
+  $('decision-note').textContent = note;
+
+  // reward
+  const setv = (id, txt, v) => { const el = $(id); el.textContent = txt; tone(el, v); };
+  if (st) {
+    setv('r-reward', sgn(st.reward * 100, 2), st.reward);
+    setv('r-gross', `${sgn(st.pnl + st.cost, 1)} pts`, st.pnl + st.cost);
+    setv('r-cost', st.cost ? `−${fmt(st.cost, 1)} pts` : '0', -st.cost);
+    setv('r-pen', st.penalty ? `−${fmt(st.penalty, 1)} pts` : '0', -st.penalty);
+  } else for (const id of ['r-reward', 'r-gross', 'r-cost', 'r-pen']) setv(id, '-', 0);
+
+  // HUD
+  const pts = done.reduce((a, t) => a + t.pts, 0), wins = done.filter(t => t.pts > 0).length;
+  const openNet = st && st.pos ? st.unreal - 2 * cps : 0;
+  scoreTarget = pts;
+  $('score-brl').textContent = `R$ ${sgn(pts * pv, 2)} · aberto ${sgn(openNet)}`;
+  $('st-trades').textContent = done.length;
+  const wr = done.length ? Math.round(100 * wins / done.length) : 0;
+  $('st-ring').style.setProperty('--p', wr);
+  $('st-wr').textContent = wr + '%';
+  let streak = 0;
+  for (let j = done.length - 1; j >= 0; j--) {
+    const w = done[j].pts > 0;
+    if (j === done.length - 1 || w === (streak > 0)) streak += w ? 1 : -1; else break;
+  }
+  const se = $('st-streak');
+  se.textContent = streak > 1 ? `🔥${streak}` : streak < -1 ? `🧊${-streak}` : streak === 1 ? '✓1' : streak === -1 ? '✗1' : '-';
+  tone(se, streak);
+  $('st-best').textContent = done.length ? sgn(Math.max(...done.map(t => t.pts))) : '-';
+  $('st-worst').textContent = done.length ? sgn(Math.min(...done.map(t => t.pts))) : '-';
+  $('st-cost').textContent = st ? '−' + fmt(st.cum_cost + st.cum_penalty) : '0';
+
+  // trades novos: chip + toast (so quando o replay anda pra frente normalmente)
+  if (done.length !== lastDone) {
+    const forward = done.length > lastDone && k - lastK <= 4;
+    renderChips(done, forward ? done.length - lastDone : 0);
+    if (forward) for (const t of done.slice(lastDone)) toast(t);
+    lastDone = done.length;
+    if (index.mode !== 'treino') renderHist();
+  }
+  lastK = k;
+}
+
+let scoreTarget = 0;
+function tickScore() {
+  const d = scoreTarget - shownScore;
+  shownScore = Math.abs(d) < 1 ? scoreTarget : shownScore + d * 0.18;
+  const el = $('score');
+  el.textContent = sgn(Math.round(shownScore));
+  tone(el, Math.round(shownScore));
+}
+
+function renderChips(done, fresh) {
+  const box = $('chips');
+  if (!done.length) { box.innerHTML = '<div class="empty">nenhum trade fechado ainda</div>'; return; }
+  box.innerHTML = done.slice().reverse().slice(0, 40).map((t, j) => `
+    <div class="chip ${t.pts > 0 ? 'win' : 'loss'} ${j < fresh ? 'new' : ''}">
+      <span class="dir" style="color:${t.side > 0 ? C.long : C.short}">${t.side > 0 ? '▲' : '▼'}</span>
+      <span class="meta">#${done.length - j} ${t.entry_time}→${t.exit_time} ${REASON[t.reason] || ''}</span>
+      <span class="pts ${t.pts > 0 ? 'good' : 'bad'}">${sgn(t.pts)}</span>
+      <span class="meta" style="grid-column:2/4">${fmt(t.entry)} → ${fmt(t.exit)} · R$ ${sgn(t.brl, 2)}</span>
+    </div>`).join('');
+}
+
+function toast(t) {
+  const el = document.createElement('div');
+  const win = t.pts > 0, big = Math.abs(t.pts) >= 200;
+  el.className = 'toast';
+  el.style.color = win ? C.good : C.bad;
+  el.innerHTML = `${sgn(t.pts)} pts${big ? (win ? ' 🚀' : ' 💥') : ''}<small>${t.side > 0 ? 'compra' : 'venda'} · ${REASON[t.reason] || ''} ${t.reason}</small>`;
+  $('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 1700);
+}
+
+// ------------------------------------------------------------------ rodape
+function renderLearning() {
+  const m = index.metrics;
+  if (index.mode !== 'treino' || !m.length) {
+    $('learn-title').textContent = index.mode === 'treino' ? 'Aprendizado · aguardando o 1o checkpoint' : 'Distribuicao dos trades deste pregao';
+    if (index.mode !== 'treino') return renderHist();
+    Plotly.react('learn', [], { ...baseLayout, margin: { l: 40, r: 10, t: 4, b: 20 }, xaxis: axis, yaxis: axis }, plotCfg);
+    return;
+  }
+  const x = m.map(r => r.timesteps / 1000), last = m.at(-1);
+  $('learn-title').textContent = `Aprendizado · entropia ${fmt(last.entropy, 2)} · ${fmt(last.timesteps / 1000)}k passos`;
+  Plotly.react('learn', [
+    { type: 'bar', x, y: m.map(r => r.demo_pnl), marker: { color: m.map(r => r.demo_pnl >= 0 ? C.good : C.bad) }, hovertemplate: 'pregao demo %{y:.0f} pts<extra></extra>' },
+    { type: 'scatter', x, y: m.map(r => r.train_reward_pts), line: { color: C.accent, width: 2 }, hovertemplate: 'reward treino %{y:.0f} pts/dia<extra></extra>' },
+    { type: 'scatter', x, y: m.map(r => r.demo_trades), yaxis: 'y2', line: { color: C.warn, width: 1, dash: 'dot' }, hovertemplate: '%{y} trades<extra></extra>' },
+  ], { ...baseLayout, margin: { l: 44, r: 34, t: 4, b: 20 },
+       xaxis: { ...axis, ticksuffix: 'k' }, yaxis: { ...axis },
+       yaxis2: { ...axis, overlaying: 'y', side: 'right', showgrid: false } }, plotCfg);
+}
+
+function renderHist() {
+  if (!ep) return;
+  const k = Math.min(p, ep.bars.length - 1);
+  const v = ep.trades.filter(t => t.exit_i <= k).map(t => t.pts);
+  Plotly.react('learn', [{ type: 'histogram', x: v, xbins: { size: 25 }, marker: { color: v.length ? C.accent : C.muted },
+    hovertemplate: '%{x} pts: %{y} trades<extra></extra>' }],
+    { ...baseLayout, bargap: .08, margin: { l: 30, r: 10, t: 4, b: 20 }, xaxis: { ...axis, ticksuffix: '' }, yaxis: { ...axis } }, plotCfg);
+}
+
+function renderDays() {
+  const e = index.episodes;
+  let acc = 0;
+  $('days-title').textContent = index.mode === 'treino' ? 'Pregao demo a cada checkpoint' : `Pregoes · total ${sgn(e.reduce((a, r) => a + r.pnl_pts, 0))} pts`;
+  Plotly.react('days', [
+    { type: 'bar', x: e.map(r => r.id), y: e.map(r => r.pnl_pts),
+      marker: { color: e.map(r => r.id === epId ? C.gold : r.pnl_pts >= 0 ? C.good : C.bad) },
+      text: e.map(r => r.day), hovertemplate: '%{text}<br>%{y:.0f} pts<extra></extra>' },
+    { type: 'scatter', x: e.map(r => r.id), y: e.map(r => (acc += r.pnl_pts)), yaxis: 'y2', line: { color: C.accent, width: 2 }, hovertemplate: 'acumulado %{y:.0f}<extra></extra>' },
+  ], { ...baseLayout, margin: { l: 44, r: 44, t: 4, b: 20 }, xaxis: { ...axis }, yaxis: { ...axis },
+       yaxis2: { ...axis, overlaying: 'y', side: 'right', showgrid: false } }, plotCfg);
+  const el = $('days');
+  if (!el.dataset.click && el.on) {
+    el.dataset.click = '1';
+    el.on('plotly_click', ev => { $('follow').checked = false; loadEpisode(ev.points[0].x).then(() => { renderDays(); setPlaying(true); }); });
+  }
+}
+
+// ------------------------------------------------------------------ controles
+function setPlaying(v) { playing = v; $('play').textContent = v ? '⏸' : '⏵'; }
+$('play').onclick = () => { if (ep && p >= ep.bars.length - 1) { p = 0; lastDone = 0; lastK = -1; } setPlaying(!playing); };
+$('prev').onclick = () => { setPlaying(false); p = Math.max(0, p - 1); draw(); };
+$('next').onclick = () => { setPlaying(false); p = Math.min(ep.bars.length - 1, p + 1); draw(); };
+$('scrub').oninput = e => { setPlaying(false); p = +e.target.value; draw(); };
+$('speed').oninput = e => { $('speedv').textContent = e.target.value; };
+$('episode').onchange = e => { $('follow').checked = false; loadEpisode(+e.target.value).then(() => { renderDays(); setPlaying(true); }); };
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT') return;
+  if (e.code === 'Space') { e.preventDefault(); $('play').click(); }
+  if (e.code === 'ArrowRight') $('next').click();
+  if (e.code === 'ArrowLeft') $('prev').click();
+});
+
+function loop(ts) {
+  tickScore();
+  if (ep && playing) {
+    const interval = 1000 / +$('speed').value;
+    if (ts - lastTick >= interval) {
+      const adv = Math.max(1, Math.floor((ts - lastTick) / interval));
+      lastTick = ts;
+      if (p < ep.bars.length - 1) {
+        p = Math.min(ep.bars.length - 1, p + adv); draw();
+      } else if (index.mode === 'assistir' && $('follow').checked) {
+        const nxt = index.episodes.find(e => e.id === epId + 1);
+        if (nxt) loadEpisode(nxt.id).then(renderDays);
+      }
+    }
+  }
+  requestAnimationFrame(loop);
+}
+
+pollIndex();
+setInterval(pollIndex, 2000);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

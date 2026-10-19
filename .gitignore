@@ -1,0 +1,20 @@
+# ambiente Python
+.venv/
+__pycache__/
+*.pyc
+
+# dados de mercado baixados do MT5 (regenerar com atualizar_dados.bat)
+data/
+
+# cerebros treinados e o time (grandes; ficam so na maquina)
+models/
+team/
+team_teste/
+
+# saidas geradas
+logs/
+reports/
+dashboard/data/
+*.tmp
+/*.log
+/*.err
