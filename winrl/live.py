@@ -143,6 +143,10 @@ class Board:
         self.index["live"] = ep.get("live")
         self.save()
 
+    def tick(self, data: dict):
+        """Preco e candle em formacao, reescrito a cada segundo (arquivo pequeno, separado do indice)."""
+        _write_json(self.dir / "tick.json", data)
+
     def live_status(self, source: str, msg: str):
         self.index["live"] = {**(self.index.get("live") or {}), "source": source, "status": msg,
                               "updated": time.strftime("%H:%M:%S")}

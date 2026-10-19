@@ -8,7 +8,7 @@ Fontes de candles:
 - SimFeed: reproduz um pregao real do historico no relogio (para testar com o mercado fechado).
 """
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import pandas as pd
@@ -77,6 +77,21 @@ class MT5Feed:
             self.ctx_day = today
             self.ctx_start = dates[max(0, len(dates) - 1 - CONTEXT_DAYS)]
         return df[df["time"].dt.date >= self.ctx_start].reset_index(drop=True)
+
+    def forming(self) -> dict | None:
+        """Preco agora e o candle de 1 minuto que ainda esta se formando (so para as telas; nao decide nada)."""
+        mt5 = self.mt5
+        tick = mt5.symbol_info_tick(self.symbol)
+        r = mt5.copy_rates_from_pos(self.symbol, mt5.TIMEFRAME_M1, 0, 1)
+        if tick is None or r is None or len(r) == 0:
+            return None
+        bar = r[-1]
+        price = float(tick.last or tick.bid or bar["close"])
+        to_hm = lambda ep: datetime.fromtimestamp(int(ep), tz=timezone.utc).strftime("%H:%M")  # noqa: E731
+        return {"t": to_hm(bar["time"]), "o": float(bar["open"]), "h": max(float(bar["high"]), price),
+                "l": min(float(bar["low"]), price), "c": price, "bid": float(tick.bid), "ask": float(tick.ask),
+                "server": datetime.fromtimestamp(int(tick.time), tz=timezone.utc).strftime("%H:%M:%S"),
+                "forming": int(bar["time"]) + 60 > int(tick.time)}
 
     def is_fresh(self, max_late=90):
         """O ultimo candle fechou agora ha pouco? (evita mandar ordem por candles antigos, ex.: na recuperacao da manha)"""
@@ -238,6 +253,13 @@ def run_live(feed, fns, names, s: Settings, board, poll=1.0, broker=None):
             last_status = time.time()
             board.live_status(feed.label, "aguardando candle novo (mercado fechado?)" if df is None or df.empty or team.closed_day
                               else "aguardando o proximo candle fechar")
+        # preco segundo a segundo para as telas (o Megazord continua decidindo so no fechamento do minuto)
+        if hasattr(feed, "forming"):
+            f = feed.forming()
+            if f:
+                if broker:
+                    f["broker_pos"] = broker.position()
+                board.tick(f)
         if feed.finished():
             print("fim do pregao simulado")
             return

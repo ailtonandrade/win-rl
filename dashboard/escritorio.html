@@ -1011,6 +1011,18 @@ function loop(ts) {
   }
   requestAnimationFrame(loop);
 }
+// preco segundo a segundo no telao (ao vivo)
+async function pollTick() {
+  if (!live() || !ep || !S.tvPrice) return;
+  try {
+    const tk = await getJSON('data/tick.json');
+    S.tvPrice.textContent = 'WIN ' + fmt(tk.c);
+    S.tvTime.textContent = tk.server;
+    const lastC = ep.bars.at(-1)[4];
+    S.tvPrice.setAttribute('fill', tk.c > lastC ? '#7ee787' : tk.c < lastC ? '#ff9aa2' : '#e6edf3');
+  } catch (e) {}
+}
+setInterval(pollTick, 1000);
 poll(); setInterval(poll, 1500); requestAnimationFrame(loop);
 </script>
 </body>

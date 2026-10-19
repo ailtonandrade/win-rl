@@ -365,16 +365,20 @@ function buildCouncil() {
 function draw(full) {
   if (!ep) return;
   const n = ep.bars.length, k = Math.min(p, n - 1);
-  const bars = ep.bars.slice(0, k + 1), xs = bars.map((_, i) => i), st = byI.get(k), cfg = ep.config;
+  const bars = ep.bars.slice(0, k + 1), st = byI.get(k), cfg = ep.config;
+  // ao vivo: vela do minuto que ainda esta se formando (so visual; a decisao sai no fechamento)
+  const fm = live() && k === n - 1 && liveTick && liveTick.forming && liveTick.t !== ep.bars[n - 1][0] ? liveTick : null;
+  liveNow = fm;
+  const vb = fm ? bars.concat([[fm.t, fm.o, fm.h, fm.l, fm.c]]) : bars, xs = vb.map((_, i) => i);
   const total = Math.max(n, live() ? 565 : n);
   let lo = Infinity, hi = -Infinity;
-  for (const b of bars) { if (b[3] < lo) lo = b[3]; if (b[2] > hi) hi = b[2]; }
+  for (const b of vb) { if (b[3] < lo) lo = b[3]; if (b[2] > hi) hi = b[2]; }
   const span = Math.max(hi - lo, 400), pad = span * 0.12;
   const yr = [Math.floor((lo - pad) / 100) * 100, Math.ceil((hi + pad) / 100) * 100];
 
-  const traces = [{ type: 'candlestick', x: xs, open: bars.map(b => b[1]), high: bars.map(b => b[2]), low: bars.map(b => b[3]), close: bars.map(b => b[4]),
+  const traces = [{ type: 'candlestick', x: xs, open: vb.map(b => b[1]), high: vb.map(b => b[2]), low: vb.map(b => b[3]), close: vb.map(b => b[4]),
     increasing: { line: { color: C.up, width: 1 }, fillcolor: C.up }, decreasing: { line: { color: C.down, width: 1 }, fillcolor: C.down },
-    text: bars.map(b => b[0]), hoverinfo: 'text+y', xaxis: 'x', yaxis: 'y' }];
+    text: vb.map(b => b[0]), hoverinfo: 'text+y', xaxis: 'x', yaxis: 'y' }];
   const shapes = [], ann = [];
   const done = ep.trades.filter(t => t.exit_i <= k);
   for (const t of done) shapes.push({ type: 'line', x0: t.entry_i, x1: t.exit_i, y0: t.entry, y1: t.exit, xref: 'x', yref: 'y', line: { color: t.pts > 0 ? C.good : C.bad, width: 2 } });
@@ -393,9 +397,9 @@ function draw(full) {
     ann.push({ x: 0, xref: 'paper', xanchor: 'left', y: st.entry, yref: 'y', showarrow: false, text: `<b>MEGAZORD ${posName(st.pos)}</b> ${fmt(st.entry)}`, bgcolor: st.pos > 0 ? C.long : C.short, font: { color: '#fff', size: 11 } });
     if (cfg.max_hold) shapes.push({ type: 'line', x0: st.entry_i + cfg.max_hold, x1: st.entry_i + cfg.max_hold, y0: 0, y1: 1, yref: 'paper', xref: 'x', line: { color: C.warn, dash: 'dot', width: 1.5 } });
   }
-  const last = bars[k][4];
+  const lastBar = vb[vb.length - 1], last = lastBar[4];
   shapes.push({ type: 'line', x0: 0, x1: total, y0: last, y1: last, xref: 'x', yref: 'y', line: { color: C.muted, width: 1, dash: 'dot' } });
-  ann.push({ x: 1, xref: 'paper', xanchor: 'left', y: last, yref: 'y', text: `<b>${fmt(last)}</b>`, showarrow: false, bgcolor: last >= bars[k][1] ? C.up : C.down, font: { color: '#fff', family: NUMFONT } });
+  ann.push({ x: 1, xref: 'paper', xanchor: 'left', y: last, yref: 'y', text: `<b>${fmt(last)}</b>`, showarrow: false, bgcolor: last >= lastBar[1] ? C.up : C.down, font: { color: '#fff', family: NUMFONT } });
   shapes.push({ type: 'line', x0: k, x1: k, y0: 0, y1: 1, yref: 'paper', xref: 'x', line: { color: C.accent, width: 1 } });
 
   // votos ao longo do dia e corrida de placares
@@ -424,14 +428,15 @@ function renderPanels(k, st, done) {
   const bar = ep.bars[k], pv = ep.point_value, cfg = ep.config, cps = ep.cost_per_side, names = ep.team.names;
   $('scrub').value = k;
   $('clock').textContent = `${ep.day}  ${bar[0]}  ·  ${k}/${ep.bars.length - 1}${live() ? '  ·  ' + (index.live?.updated || '') : ''}`;
-  $('now-price').textContent = fmt(bar[4]); $('now-time').textContent = bar[0];
+  $('now-price').textContent = fmt(liveNow ? liveNow.c : bar[4]); $('now-time').textContent = liveNow ? liveNow.server : bar[0];
   const pos = st ? st.pos : 0;
   $('pos').textContent = posName(pos); $('pos').className = 'posname ' + posCls(pos);
   $('mzcard').className = 'card mz ' + (pos ? posCls(pos) : '');
   if (pos !== lastPos) { $('pos').classList.remove('pop'); void $('pos').offsetWidth; $('pos').classList.add('pop'); lastPos = pos; }
   if (st && st.pos) {
     $('o-entry').textContent = `${ep.bars[st.entry_i][0]} ${fmt(st.entry)}`;
-    $('o-unreal').textContent = sgn(st.unreal); tone($('o-unreal'), st.unreal);
+    const un = liveNow ? st.pos * (liveNow.c - st.entry) : st.unreal;
+    $('o-unreal').textContent = sgn(un); tone($('o-unreal'), un);
     $('o-hold').textContent = cfg.max_hold ? `${st.bars_in_pos}/${cfg.max_hold}` : st.bars_in_pos;
     $('hold-bar').style.width = cfg.max_hold ? Math.min(100, 100 * st.bars_in_pos / cfg.max_hold) + '%' : '0';
   } else {
@@ -639,6 +644,13 @@ function loop(ts) {
   }
   requestAnimationFrame(loop);
 }
+// preco segundo a segundo no ao vivo
+let liveTick = null, liveNow = null;
+async function pollTick() {
+  if (!live() || !ep) return;
+  try { liveTick = await getJSON('data/tick.json'); if ($('follow').checked) draw(); } catch (e) {}
+}
+setInterval(pollTick, 1000);
 pollIndex(); setInterval(pollIndex, 1500); requestAnimationFrame(loop);
 </script>
 </body>
