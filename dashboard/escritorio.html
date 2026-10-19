@@ -22,7 +22,7 @@
     body { overflow: auto; }
     .app { height: auto; min-height: 100vh; align-content: start; grid-template-columns: minmax(0, 1fr);
            grid-template-rows: auto auto auto; grid-template-areas: "top" "scene" "side"; }
-    .scene { height: auto !important; aspect-ratio: 730 / 515; }
+    .scene { height: auto !important; aspect-ratio: 740 / 530; }
   }
   .box { background: var(--panel); border: 2px solid var(--line); border-radius: 4px; box-shadow: 0 3px 0 #000a; min-width: 0; }
 
@@ -50,18 +50,50 @@
   .scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   svg text { font-family: var(--pix); }
   .px { shape-rendering: crispEdges; }
-  .bob { animation: bob .5s steps(2) infinite; transform-box: fill-box; }
-  .bob.slow { animation-duration: 1.4s; }
-  @keyframes bob { 50% { transform: translateY(-2px); } }
-  .pop { animation: pop .35s ease-out; transform-box: fill-box; transform-origin: 50% 100%; }
+  .fb { transform-box: fill-box; }
+  /* trader */
+  .breathe { animation: breathe 2.4s steps(2) infinite; }
+  @keyframes breathe { 50% { transform: translateY(-1px); } }
+  .typeL { animation: typ .28s steps(2) infinite; } .typeR { animation: typ .28s steps(2) infinite .14s; }
+  .idle .typeL, .idle .typeR { animation-duration: 1.6s; }
+  @keyframes typ { 50% { transform: translateY(-2px); } }
+  .shake { animation: shake .18s steps(2) infinite; }
+  @keyframes shake { 50% { transform: translateX(1.5px); } }
+  .jump { animation: jump .5s ease-out 2; }
+  @keyframes jump { 40% { transform: translateY(-7px); } }
+  .puff { animation: puff 1.2s ease-out infinite; }
+  .puff.d1 { animation-delay: .4s; } .puff.d2 { animation-delay: .8s; }
+  @keyframes puff { 0% { opacity: 0; transform: translate(0, 0) scale(.5); } 30% { opacity: .9; } 100% { opacity: 0; transform: translate(4px, -14px) scale(1.4); } }
+  .throb { animation: throb .6s ease-in-out infinite alternate; }
+  @keyframes throb { to { transform: scale(1.25); } }
+  .steam { animation: steam 2.2s ease-out infinite; } .steam.s2 { animation-delay: 1.1s; }
+  @keyframes steam { 0% { opacity: 0; transform: translateY(0); } 30% { opacity: .7; } 100% { opacity: 0; transform: translateY(-10px); } }
+  .pop { animation: pop .35s ease-out; transform-origin: 50% 100%; }
   @keyframes pop { 0% { transform: scale(.2); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
-  .float { animation: floatup 1.6s ease-out forwards; transform-box: fill-box; }
+  .float { animation: floatup 1.6s ease-out forwards; }
   @keyframes floatup { 0% { opacity: 0; transform: translateY(6px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(-46px); } }
-  .glow { animation: glow 1s infinite alternate; }
-  .code { animation: code 1.1s linear infinite; }
-  .code.fast { animation-duration: .45s; }
+  .code { animation: code 1.1s linear infinite; } .code.fast { animation-duration: .45s; }
   @keyframes code { from { transform: translateY(0); } to { transform: translateY(-20px); } }
-  @keyframes glow { to { opacity: .55; } }
+  .blinkled { animation: blink 1.2s steps(2) infinite; }
+  /* computador quantico */
+  .ring { animation: ringpulse 2.4s ease-in-out infinite; }
+  @keyframes ringpulse { 50% { opacity: .45; } }
+  .vapor { animation: vapor 3s ease-out infinite; } .vapor.v2 { animation-delay: 1s; } .vapor.v3 { animation-delay: 2s; }
+  @keyframes vapor { 0% { opacity: 0; transform: translate(0, 0) scale(.6); } 25% { opacity: .55; } 100% { opacity: 0; transform: translate(6px, -22px) scale(1.6); } }
+  .qspin { animation: qspin 6s linear infinite; }
+  @keyframes qspin { 50% { opacity: .55; } }
+  .rack { animation: rack .9s steps(2) infinite; } .rack.r2 { animation-delay: .3s; } .rack.r3 { animation-delay: .6s; }
+  @keyframes rack { 50% { opacity: .15; } }
+  .victory .flash { animation: flash .25s steps(2) 6; }
+  @keyframes flash { 50% { opacity: 1; } }
+  @keyframes drive { from { transform: translateX(-40px); } to { transform: translateX(var(--w)); } }
+  @keyframes driveL { from { transform: translateX(var(--w)); } to { transform: translateX(-40px); } }
+  /* ida ao bebedouro */
+  .walking .legL { animation: step .32s steps(2) infinite; } .walking .legR { animation: step .32s steps(2) infinite .16s; }
+  @keyframes step { 50% { transform: translateY(-2px); } }
+  .bubbles circle { animation: bub 1.2s ease-out infinite; }
+  @keyframes bub { from { transform: translateY(0); opacity: .9; } to { transform: translateY(-14px); opacity: 0; } }
+
   .hint { position: absolute; left: 10px; bottom: 8px; font-size: 16px; color: var(--muted); pointer-events: none; }
   .banner { position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); font: 12px var(--pix); text-align: center;
             background: #0b1020ee; border: 2px solid var(--line); padding: 16px 20px; display: none; line-height: 1.8; }
@@ -100,7 +132,7 @@
   </div>
 
   <div class="box scene" id="scene">
-    <svg id="svg" viewBox="40 0 730 515" preserveAspectRatio="xMidYMid meet"></svg>
+    <svg id="svg" viewBox="30 -10 740 530" preserveAspectRatio="xMidYMid meet"></svg>
     <div class="banner" id="banner"></div>
     <div class="hint">espaco: pausa · ← →: candle a candle</div>
   </div>
@@ -115,7 +147,8 @@
 // ============================================================== dados e reproducao (mesmo formato do painel)
 const $ = id => document.getElementById(id);
 const TC = ['#ff6b6b', '#4dabf7', '#51cf66', '#fcc419', '#cc5de8', '#20c997', '#f783ac', '#94d82d', '#ffa94d', '#748ffc'];
-const HAIR = ['#3b2314', '#f2d16b', '#1d1d1d', '#a0522d', '#e8e8e8', '#6b3fa0', '#b5651d', '#222', '#c0392b', '#444'];
+const HAIR = ['#3b2314', '#f2d16b', '#1d1d1d', '#a0522d', '#d9d9d9', '#6b3fa0', '#b5651d', '#222', '#c0392b', '#444'];
+const SKIN = ['#f1c27d', '#ffdbac', '#c68642', '#e0ac69', '#8d5524', '#f1c27d', '#ffdbac', '#c68642', '#e0ac69', '#8d5524'];
 const fmt = (v, d = 0) => v == null || isNaN(v) ? '-' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
 const sgn = (v, d = 0) => v == null || isNaN(v) ? '-' : (v > 0 ? '+' : v < 0 ? '−' : '') + fmt(Math.abs(v), d);
 let index = null, ep = null, epId = null, byI = new Map(), p = 0, playing = true, lastTick = 0, stamp = 0;
@@ -128,7 +161,7 @@ async function poll() {
   try {
     const idx = await getJSON('data/index.json');
     if (idx.updated === stamp) return;
-    stamp = idx.updated; const first = !index; index = idx;
+    stamp = idx.updated; index = idx;
     $('mode').textContent = { treino: 'TREINO', replay: 'REPLAY', ao_vivo: 'AO VIVO' }[idx.mode] || idx.mode;
     $('mode').className = 'badge ' + idx.mode;
     $('episode').innerHTML = idx.episodes.map(e => `<option value="${e.id}">${e.round != null ? 'R' + e.round + ' ' : ''}${e.day} ${sgn(e.pnl_pts)}</option>`).join('');
@@ -144,9 +177,9 @@ async function poll() {
     if (!newest) return banner(live() ? 'AGUARDANDO O MERCADO' : 'AGUARDANDO O TIME', idx.live?.status || 'rode o run.bat');
     banner(null);
     if (live()) { if ($('follow').checked || !ep) await load(newest.id); return; }
-    if (first || !ep || ($('follow').checked && idx.mode === 'treino' && newest.id !== epId && p >= ep.bars.length - 1))
-      await load(idx.mode === 'replay' && first ? idx.episodes[0].id : newest.id);
-  } catch (e) { banner('SEM DADOS', 'rode o run.bat'); }
+    if (!ep || S.studying || ($('follow').checked && idx.mode === 'treino' && newest.id !== epId && p >= ep.bars.length - 1))
+      await load(idx.mode === 'replay' && !ep ? idx.episodes[0].id : newest.id);
+  } catch (e) { console.error(e); banner('SEM DADOS', 'rode o run.bat'); }
 }
 function banner(a, b) { $('banner').style.display = a ? 'block' : 'none'; if (a) $('banner').innerHTML = a + '<br><span style="font-size:9px;color:#8a96b3">' + (b || '') + '</span>'; }
 
@@ -155,15 +188,15 @@ async function load(id) {
   const fresh = id !== epId;
   ep = await getJSON('data/' + meta.file);
   byI = new Map(ep.steps.map(s => [s.i, s])); epId = id; $('episode').value = id;
-  if (fresh || S.studying) { build(ep.team.names); prev = null; $('feed').innerHTML = ''; p = live() ? ep.bars.length - 1 : 0; }
+  if (fresh || S.studying || !S.names) { build(ep.team.names); prev = null; $('feed').innerHTML = ''; p = live() ? ep.bars.length - 1 : 0; }
   if (live() && $('follow').checked) p = ep.bars.length - 1;
   render();
 }
 
 // ============================================================== isometria
-const T = 32, W = 13, D = 9, WALL = 120, OX = D * T + 50, OY = 150;
+const T = 32, W = 13, D = 9, WALL = 128, OX = D * T + 50, OY = 160;
 const iso = (x, y, z = 0) => [OX + (x - y) * T, OY + (x + y) * T / 2 - z];
-const P = pts => pts.map(q => q.join(',')).join(' ');
+const P = pts => pts.map(q => q.map(v => Math.round(v * 10) / 10).join(',')).join(' ');
 const NS = 'http://www.w3.org/2000/svg';
 function el(tag, attrs = {}, parent) {
   const e = document.createElementNS(NS, tag);
@@ -171,207 +204,431 @@ function el(tag, attrs = {}, parent) {
   if (parent) parent.appendChild(e);
   return e;
 }
+const R = (g, x, y, w, h, fill, extra = {}) => el('rect', { x, y, width: w, height: h, fill, ...extra }, g);
 function shade(hex, f) {
   const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
   const m = c => Math.max(0, Math.min(255, Math.round(f < 0 ? c * (1 + f) : c + (255 - c) * f)));
   return '#' + ((m(r) << 16) | (m(g) << 8) | m(b)).toString(16).padStart(6, '0');
 }
+// caixa isometrica: face +y (esquerda na tela), face +x (direita) e topo
 function box(g, x, y, w, d, h, z0, color, extra = {}) {
-  el('polygon', { points: P([iso(x, y + d, z0 + h), iso(x + w, y + d, z0 + h), iso(x + w, y + d, z0), iso(x, y + d, z0)]), fill: shade(color, -.18), ...extra }, g);
-  el('polygon', { points: P([iso(x + w, y, z0 + h), iso(x + w, y + d, z0 + h), iso(x + w, y + d, z0), iso(x + w, y, z0)]), fill: shade(color, -.35), ...extra }, g);
+  el('polygon', { points: P([iso(x, y + d, z0 + h), iso(x + w, y + d, z0 + h), iso(x + w, y + d, z0), iso(x, y + d, z0)]), fill: shade(color, -.15), ...extra }, g);
+  el('polygon', { points: P([iso(x + w, y, z0 + h), iso(x + w, y + d, z0 + h), iso(x + w, y + d, z0), iso(x + w, y, z0)]), fill: shade(color, -.32), ...extra }, g);
   el('polygon', { points: P([iso(x, y, z0 + h), iso(x + w, y, z0 + h), iso(x + w, y + d, z0 + h), iso(x, y + d, z0 + h)]), fill: color, ...extra }, g);
 }
+// planos das paredes para desenhar "adesivos" (quadros, janela, telao) em perspectiva
+const onWallX = (g, y, z) => { const [a, b] = iso(0, y, z); return el('g', { transform: `matrix(1,-0.5,0,1,${a},${b})` }, g); }; // parede da esquerda, u cresce pra direita (y diminui)
+const onWallY = (g, x, z) => { const [a, b] = iso(x, 0, z); return el('g', { transform: `matrix(1,0.5,0,1,${a},${b})` }, g); };  // parede da direita
+const onFaceY = (g, x, y, z) => { const [a, b] = iso(x, y, z); return el('g', { transform: `matrix(1,0.5,0,1,${a},${b})` }, g); }; // face +y de um objeto
 
-// posicao das mesas (tile x, y) - fileira de tras com 3, da frente com 2
-const DESKS = [[2.2, 2.6], [5.0, 2.6], [7.8, 2.6], [3.6, 5.4], [6.4, 5.4]];
-const MZ = [11.7, 7.6];
-const S = {}; // referencias da cena
+// layout: mesas (x, y) e os traders sentam NA FRENTE (lado +y), de costas pra camera, olhando o PC
+const DESKS = [[1.6, 1.5], [4.5, 1.5], [7.4, 1.5], [3.0, 4.6], [5.9, 4.6]];
+const DESK_W = 1.9, DESK_D = .95, DESK_H = 24, MON_X = .7, MON_W = .82, SEAT_DX = MON_X + MON_W / 2;
+const MZ = [0.82, 0.74];
+const S = {};
 
 function build(names) {
-  S.names = names; S.studying = false; S.study = {};
+  S.names = names; S.studying = false; S.study = {}; S.agents = [];
   const svg = $('svg'); svg.innerHTML = '';
   const defs = el('defs', {}, svg);
-  defs.innerHTML = `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop id="sky1" offset="0" stop-color="#8fd3ff"/><stop id="sky2" offset="1" stop-color="#e0f4ff"/></linearGradient>`;
+  defs.innerHTML = `
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop id="sky1" offset="0" stop-color="#8fd3ff"/><stop id="sky2" offset="1" stop-color="#e0f4ff"/></linearGradient>
+    <radialGradient id="mzglow"><stop offset="0" stop-color="#ffd166" stop-opacity=".55"/><stop offset="1" stop-color="#ffd166" stop-opacity="0"/></radialGradient>
+    <radialGradient id="lampglow"><stop offset="0" stop-color="#fff2b3" stop-opacity=".35"/><stop offset="1" stop-color="#fff2b3" stop-opacity="0"/></radialGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#dfe6f0"/><stop offset=".6" stop-color="#aab4c4"/><stop offset="1" stop-color="#7d889a"/></linearGradient>`;
   const g = el('g', { class: 'px' }, svg);
+  drawRoom(g);
 
-  // paredes
-  el('polygon', { points: P([iso(0, 0, 0), iso(0, D, 0), iso(0, D, WALL), iso(0, 0, WALL)]), fill: '#cfc6b0' }, g);
-  el('polygon', { points: P([iso(0, 0, 0), iso(W, 0, 0), iso(W, 0, WALL), iso(0, 0, WALL)]), fill: '#e3dbc6' }, g);
-  el('polygon', { points: P([iso(0, D, WALL), iso(0, 0, WALL), iso(W, 0, WALL), iso(W, 0, WALL + 8), iso(0, 0, WALL + 8), iso(0, D, WALL + 8)]), fill: '#8c7b5e' }, g);
-  for (let z of [0]) { // rodape
-    el('polygon', { points: P([iso(0, 0, 0), iso(0, D, 0), iso(0, D, 8), iso(0, 0, 8)]), fill: '#7a6a4f' }, g);
-    el('polygon', { points: P([iso(0, 0, 0), iso(W, 0, 0), iso(W, 0, 8), iso(0, 0, 8)]), fill: '#8c7b5e' }, g);
-  }
-  // piso xadrez
-  for (let x = 0; x < W; x++) for (let y = 0; y < D; y++)
-    el('polygon', { points: P([iso(x, y), iso(x + 1, y), iso(x + 1, y + 1), iso(x, y + 1)]), fill: (x + y) % 2 ? '#b9a27a' : '#c8b28a', stroke: '#a68f68', 'stroke-width': .5 }, g);
-  // tapete central
-  el('polygon', { points: P([iso(3, 4.3), iso(8.5, 4.3), iso(8.5, 8.3), iso(3, 8.3)]), fill: '#2d4a7a', opacity: .55 }, g);
-  // canto do chefe
-  el('polygon', { points: P([iso(10.4, 6.3), iso(13, 6.3), iso(13, 9), iso(10.4, 9)]), fill: '#5a2d2d', opacity: .6 }, g);
-
-  // telao na parede da esquerda (texto em perspectiva)
-  const [bx, by] = iso(0, 7.4, WALL - 14);
-  const tv = el('g', { transform: `matrix(1,-0.5,0,1,${bx},${by})` }, g);
-  el('rect', { x: -4, y: -4, width: 200, height: 92, fill: '#222', rx: 2 }, tv);
-  el('rect', { x: 0, y: 0, width: 192, height: 84, fill: '#06121f' }, tv);
-  S.tvTitle = el('text', { x: 6, y: 13, 'font-size': 7, fill: '#ffd166' }, tv); S.tvTitle.textContent = 'MEGAZORD';
-  S.tvPrice = el('text', { x: 6, y: 32, 'font-size': 13, fill: '#e6edf3' }, tv);
-  S.tvTime = el('text', { x: 186, y: 13, 'font-size': 7, fill: '#8a96b3', 'text-anchor': 'end' }, tv);
-  S.tvLine = el('polyline', { fill: 'none', stroke: '#26a69a', 'stroke-width': 1.5, points: '' }, tv);
-  S.tvStatus = el('text', { x: 6, y: 78, 'font-size': 8, fill: '#8a96b3' }, tv);
-  S.tvScore = el('text', { x: 186, y: 78, 'font-size': 8, fill: '#e6edf3', 'text-anchor': 'end' }, tv);
-
-  // janela na parede da direita
-  const [wx, wy] = iso(1.3, 0, WALL - 22);
-  const win = el('g', { transform: `matrix(1,0.5,0,1,${wx},${wy})` }, g);
-  el('rect', { x: -4, y: -4, width: 128, height: 70, fill: '#f5f0e6' }, win);
-  el('rect', { x: 0, y: 0, width: 120, height: 62, fill: 'url(#sky)' }, win);
-  S.skyline = el('g', {}, win);
-  [[4, 30, 14], [20, 18, 12], [34, 38, 18], [54, 24, 10], [66, 12, 16], [84, 34, 12], [98, 20, 18]].forEach(([x, h, w]) => {
-    el('rect', { x, y: 62 - h, width: w, height: h, fill: '#5b6b8c' }, S.skyline);
-    for (let yy = 62 - h + 4; yy < 58; yy += 7) el('rect', { x: x + 3, y: yy, width: 3, height: 3, fill: '#ffe08a', class: 'winlight', opacity: 0 }, S.skyline);
-  });
-  el('rect', { x: 58, y: 0, width: 4, height: 62, fill: '#f5f0e6' }, win);
-  el('rect', { x: 0, y: 29, width: 120, height: 4, fill: '#f5f0e6' }, win);
-  // relogio de parede
-  const [cx, cy] = iso(6.8, 0, WALL - 34);
-  const clk = el('g', { transform: `matrix(1,0.5,0,1,${cx},${cy})` }, g);
-  el('circle', { cx: 12, cy: 12, r: 13, fill: '#fff', stroke: '#333', 'stroke-width': 2 }, clk);
-  S.hh = el('line', { x1: 12, y1: 12, x2: 12, y2: 5, stroke: '#111', 'stroke-width': 2 }, clk);
-  S.mm = el('line', { x1: 12, y1: 12, x2: 12, y2: 2, stroke: '#c0392b', 'stroke-width': 1 }, clk);
-  // quadro de avisos
-  const [nx, ny] = iso(10.2, 0, WALL - 30);
-  const nb = el('g', { transform: `matrix(1,0.5,0,1,${nx},${ny})` }, g);
-  el('rect', { x: 0, y: 0, width: 44, height: 34, fill: '#b5835a', stroke: '#6d4c33', 'stroke-width': 2 }, nb);
-  [['#ffe066', 4, 4], ['#9fe6a0', 22, 6], ['#ffadad', 8, 19]].forEach(([c, x, y]) => el('rect', { x, y, width: 14, height: 11, fill: c }, nb));
-
-  // objetos com profundidade: desenhados de tras pra frente
+  // objetos com profundidade (de tras pra frente)
   const objs = [];
-  objs.push({ d: 0.8 + 7.9, draw: gg => plant(gg, 0.6, 7.9) });
-  objs.push({ d: 12.2 + 0.7, draw: gg => cooler(gg, 12.1, 0.6) });
-  objs.push({ d: 12.4 + 4.4, draw: gg => plant(gg, 12.4, 4.4) });
-  objs.push({ d: 0.7 + 0.7, draw: gg => plant(gg, 0.6, 0.6) });
-  S.agents = [];
+  objs.push({ d: 10.9, draw: gg => shelf(gg, 9.3, 0.15) });
+  objs.push({ d: 12.9, draw: gg => cooler(gg, 12.3, 0.6) });
+  objs.push({ d: 6.8, draw: gg => coffee(gg, 0.15, 6.2) });
+  objs.push({ d: 8.6, draw: gg => plant(gg, 0.6, 8.0, 1) });
+  objs.push({ d: 9.3, draw: gg => plant(gg, 8.8, 0.5, 1.1) });
   names.forEach((nm, j) => {
     const [dx, dy] = DESKS[j % DESKS.length];
-    objs.push({ d: dx + dy + 0.15, draw: gg => S.agents[j] = agent(gg, dx + 0.55, dy - 0.3, j, nm) });
-    objs.push({ d: dx + dy + 1.2, draw: gg => desk(gg, dx, dy, j) });
+    objs.push({ d: dx + dy + 1.4, draw: gg => desk(gg, dx, dy, j) });
+    objs.push({ d: dx + dy + 2.3, draw: gg => S.agents[j] = trader(gg, dx + SEAT_DX + .12, dy + DESK_D + .3, j, nm) });
   });
-  objs.push({ d: MZ[0] + MZ[1], draw: gg => S.mz = robot(gg, MZ[0], MZ[1]) });
+  objs.push({ d: MZ[0] + MZ[1], draw: gg => S.mz = megazord(gg, MZ[0], MZ[1]) });
   objs.sort((a, b) => a.d - b.d).forEach(o => o.draw(g));
-  S.fx = el('g', {}, svg); // efeitos por cima de tudo
+  S.night = el('polygon', { points: P([iso(0, 0, WALL + 9), iso(W, 0, WALL + 9), iso(W, 0, 0), iso(W, D, 0), iso(0, D, 0), iso(0, D, WALL + 9)]), fill: '#0a1030', opacity: 0, 'pointer-events': 'none' }, svg);
+  S.walkers = el('g', {}, svg);  // quem levanta pra beber agua anda por cima do resto
+  S.fx = el('g', {}, svg);
+  S.walk = null;
 }
 
-function plant(g, x, y) {
-  box(g, x - .2, y - .2, .4, .4, 14, 0, '#c96f3b');
-  const [px, py] = iso(x, y, 14);
-  [[-8, -10, 9], [6, -14, 8], [0, -22, 10], [-4, -16, 7], [8, -6, 6]].forEach(([dx, dy, r]) => el('circle', { cx: px + dx, cy: py + dy, r, fill: '#3c9a4a' }, g));
+// ------------------------------------------------------------- sala
+function drawRoom(g) {
+  // paredes com lambri, faixa e rodateto
+  const wallL = '#d8cdb4', wallR = '#e7ddc6', pane = '#8a6a4a', paneR = '#9c7a56';
+  el('polygon', { points: P([iso(0, 0, 0), iso(0, D, 0), iso(0, D, WALL), iso(0, 0, WALL)]), fill: wallL }, g);
+  el('polygon', { points: P([iso(0, 0, 0), iso(W, 0, 0), iso(W, 0, WALL), iso(0, 0, WALL)]), fill: wallR }, g);
+  el('polygon', { points: P([iso(0, 0, 0), iso(0, D, 0), iso(0, D, 34), iso(0, 0, 34)]), fill: pane }, g);
+  el('polygon', { points: P([iso(0, 0, 0), iso(W, 0, 0), iso(W, 0, 34), iso(0, 0, 34)]), fill: paneR }, g);
+  for (let y = .5; y < D; y += 1) el('polygon', { points: P([iso(0, y, 6), iso(0, y + .8, 6), iso(0, y + .8, 30), iso(0, y, 30)]), fill: shade(pane, .1) }, g);
+  for (let x = .5; x < W; x += 1) el('polygon', { points: P([iso(x, 0, 6), iso(x + .8, 0, 6), iso(x + .8, 0, 30), iso(x, 0, 30)]), fill: shade(paneR, .1) }, g);
+  el('polygon', { points: P([iso(0, 0, 34), iso(0, D, 34), iso(0, D, 37), iso(0, 0, 37)]), fill: '#5c4630' }, g);
+  el('polygon', { points: P([iso(0, 0, 34), iso(W, 0, 34), iso(W, 0, 37), iso(0, 0, 37)]), fill: '#6b5238' }, g);
+  el('polygon', { points: P([iso(0, D, WALL), iso(0, 0, WALL), iso(W, 0, WALL), iso(W, 0, WALL + 9), iso(0, 0, WALL + 9), iso(0, D, WALL + 9)]), fill: '#4a3a2a' }, g);
+  // piso de tabuas
+  for (let x = 0; x < W; x++) for (let y = 0; y < D; y++) {
+    const c = (x * 7 + y * 3) % 5 === 0 ? '#b89468' : (x + y) % 2 ? '#c49f72' : '#caa679';
+    el('polygon', { points: P([iso(x, y), iso(x + 1, y), iso(x + 1, y + 1), iso(x, y + 1)]), fill: c }, g);
+    for (const f of [.33, .66]) el('line', { x1: iso(x, y + f)[0], y1: iso(x, y + f)[1], x2: iso(x + 1, y + f)[0], y2: iso(x + 1, y + f)[1], stroke: '#a7845a', 'stroke-width': .6 }, g);
+  }
+  // tapete da equipe (com borda) e area do chefe
+  el('polygon', { points: P([iso(1.0, 1.0), iso(9.6, 1.0), iso(9.6, 7.8), iso(1.0, 7.8)]), fill: '#24406e' }, g);
+  el('polygon', { points: P([iso(1.3, 1.3), iso(9.3, 1.3), iso(9.3, 7.5), iso(1.3, 7.5)]), fill: '#2e5089' }, g);
+  el('polygon', { points: P([iso(1.3, 1.3), iso(9.3, 1.3), iso(9.3, 7.5), iso(1.3, 7.5)]), fill: 'none', stroke: '#ffd166', 'stroke-width': 1, opacity: .5 }, g);
+
+  // telao na parede da esquerda
+  const tv = onWallX(g, 8.4, WALL - 12);
+  R(tv, -5, -5, 210, 98, '#1b1b1b'); R(tv, -3, -3, 206, 94, '#333');
+  R(tv, 0, 0, 200, 88, '#06121f');
+  for (let yy = 0; yy < 88; yy += 3) R(tv, 0, yy, 200, 1, '#ffffff', { opacity: .03 });
+  S.tvTitle = el('text', { x: 6, y: 13, 'font-size': 7, fill: '#ffd166' }, tv);
+  S.tvPrice = el('text', { x: 6, y: 33, 'font-size': 13, fill: '#e6edf3' }, tv);
+  S.tvTime = el('text', { x: 194, y: 13, 'font-size': 7, fill: '#8a96b3', 'text-anchor': 'end' }, tv);
+  S.tvLine = el('polyline', { fill: 'none', stroke: '#26a69a', 'stroke-width': 1.5, points: '' }, tv);
+  S.tvStatus = el('text', { x: 6, y: 82, 'font-size': 8, fill: '#8a96b3' }, tv);
+  S.tvScore = el('text', { x: 194, y: 82, 'font-size': 8, fill: '#e6edf3', 'text-anchor': 'end' }, tv);
+  R(tv, 196, 86, 3, 2, '#2ee66b', { class: 'blinkled' });
+  // janela panoramica: andar alto, cidade la embaixo
+  const WW = 248, WH = 80;
+  const win = onWallY(g, 1.0, WALL - 8);
+  R(win, -5, -5, WW + 10, WH + 10, '#3a3f4a');
+  const cityClip = el('clipPath', { id: 'cityclip' }, win); R(cityClip, 0, 0, WW, WH, '#000');
+  const city = el('g', { 'clip-path': 'url(#cityclip)' }, win);
+  R(city, 0, 0, WW, WH, 'url(#sky)');
+  S.stars = el('g', { opacity: 0 }, city);
+  for (let k = 0; k < 34; k++) R(S.stars, (k * 73) % WW, (k * 37) % 34, 1, 1, '#fff', { opacity: .4 + (k % 3) * .3 });
+  S.sun = el('circle', { cx: 40, cy: 20, r: 7, fill: '#ffe08a' }, city);
+  S.sunHalo = el('circle', { cx: 40, cy: 20, r: 14, fill: '#ffe08a', opacity: .25 }, city);
+  S.moon = el('g', { opacity: 0 }, city);
+  el('circle', { cx: 0, cy: 0, r: 6, fill: '#f1f3f7' }, S.moon); el('circle', { cx: 3, cy: -2, r: 5, fill: 'url(#sky)' }, S.moon);
+  S.cityW = WW;
+  // nuvens
+  [[10, 12, 70], [120, 22, 95], [190, 8, 80]].forEach(([x0, y0, dur], k) => {
+    const cl = el('g', { style: `--w:${WW + 80}px; animation: drive ${dur}s linear infinite; animation-delay:-${k * 23}s`, class: 'fb' }, city);
+    [[0, 0, 9], [8, -3, 7], [15, 0, 8], [7, 2, 8]].forEach(([dx, dy, r]) => el('ellipse', { cx: x0 % 40 + dx - 40, cy: y0 + dy, rx: r, ry: r * .6, fill: '#fff', opacity: .75, class: 'cloud' }, cl));
+  });
+  // predios ao longe e perto
+  const lights = [];
+  const bld = (x, top, w, col, near) => {
+    R(city, x, top, w, 64 - top, col);
+    R(city, x, top, w, 2, shade(col, .15));
+    for (let yy = top + 4; yy < 61; yy += near ? 5 : 4) for (let xx = x + 2; xx < x + w - 2; xx += near ? 4 : 3) {
+      R(city, xx, yy, near ? 2 : 1, near ? 2 : 1, shade(col, -.25));
+      lights.push(R(city, xx, yy, near ? 2 : 1, near ? 2 : 1, ['#ffe08a', '#fff3c4', '#a5d8ff'][(xx + yy) % 3], { opacity: 0, 'data-th': ((xx * 13 + yy * 7) % 100) / 100 }));
+    }
+  };
+  [[0, 34, 22], [24, 40, 16], [42, 28, 20], [66, 38, 14], [82, 24, 18], [104, 42, 22], [130, 30, 16], [150, 36, 20], [174, 26, 18], [196, 40, 16], [216, 32, 22], [240, 38, 12]]
+    .forEach(([x, top, w]) => bld(x, top, w, '#7d8ba8', false));
+  [[-4, 12, 26], [60, 46, 20], [118, 20, 24], [200, 14, 30]].forEach(([x, top, w]) => bld(x, top, w, '#4b5875', true));
+  // avenida la embaixo
+  R(city, 0, 64, WW, 3, '#9aa3b1');
+  R(city, 0, 67, WW, 13, '#30343c');
+  for (let x = 0; x < WW; x += 14) R(city, x, 73, 7, 1, '#e9c46a');
+  const cars = el('g', {}, city);
+  const carCols = ['#e63946', '#f1faee', '#457b9d', '#ffb703', '#2a9d8f', '#8338ec', '#fb5607'];
+  S.carLights = [];
+  for (let k = 0; k < 9; k++) {
+    const right = k % 2 === 0, lane = right ? 68.5 : 75, dur = 5 + (k * 1.7) % 6, w = 9 + (k % 3) * 2;
+    const car = el('g', { class: 'fb', style: `--w:${WW + 60}px; animation: ${right ? 'drive' : 'driveL'} ${dur}s linear infinite; animation-delay:-${(k * 2.3) % dur}s` }, cars);
+    R(car, 0, lane, w, 4, carCols[k % carCols.length]); R(car, 2, lane - 2, w - 4, 2, shade(carCols[k % carCols.length], -.2));
+    R(car, 2, lane + 3, 2, 1.5, '#111'); R(car, w - 4, lane + 3, 2, 1.5, '#111');
+    const head = R(car, right ? w : -3, lane + 1, 3, 2, '#fff7c2', { opacity: 0 });
+    const tail = R(car, right ? -1 : w, lane + 1, 1, 2, '#ff3b47', { opacity: 0 });
+    S.carLights.push(head, tail);
+  }
+  S.cityNight = R(city, 0, 0, WW, 67, '#050a1e', { opacity: 0 });
+  lights.forEach(l => city.appendChild(l));            // janelas acesas por cima da escuridao
+  S.cityLights = lights;
+  S.carLights.forEach(l => l.parentNode && l.parentNode.appendChild(l));
+  // reflexo e caixilhos
+  el('polygon', { points: `20,0 50,0 20,${WH} -10,${WH}`, fill: '#fff', opacity: .07 }, win);
+  el('polygon', { points: `140,0 155,0 125,${WH} 110,${WH}`, fill: '#fff', opacity: .05 }, win);
+  for (let k = 1; k < 4; k++) R(win, k * WW / 4 - 1.5, 0, 3, WH, '#3a3f4a');
+  R(win, -5, WH, WW + 10, 4, '#2b2f36');
+  // relogio (acima da estante)
+  const clk = onWallY(g, 9.9, WALL - 20);
+  el('circle', { cx: 12, cy: 12, r: 13, fill: '#fff', stroke: '#333', 'stroke-width': 2 }, clk);
+  for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; R(clk, 12 + Math.sin(a) * 10 - .5, 12 - Math.cos(a) * 10 - .5, 1, 1, '#333'); }
+  S.hh = el('line', { x1: 12, y1: 12, x2: 12, y2: 6, stroke: '#111', 'stroke-width': 2 }, clk);
+  S.mm = el('line', { x1: 12, y1: 12, x2: 12, y2: 3, stroke: '#c0392b', 'stroke-width': 1 }, clk);
+  // quadro de avisos
+  const nb = onWallY(g, 11.4, WALL - 30);
+  R(nb, 0, 0, 46, 34, '#b5835a', { stroke: '#6d4c33', 'stroke-width': 2 });
+  [['#ffe066', 4, 4], ['#9fe6a0', 23, 6], ['#ffadad', 8, 19], ['#a5d8ff', 27, 20]].forEach(([c, x, y]) => R(nb, x, y, 13, 10, c));
+  // luminarias
+  S.lampGlows = [];
+  [[3.4, 'X'], [6.6, 'X'], [12.6, 'Y']].forEach(([pos, w]) => {
+    const lp = w === 'Y' ? onWallY(g, pos, WALL - 8) : onWallX(g, pos, WALL - 8);
+    R(lp, 0, 0, 10, 6, '#ffd166'); R(lp, 2, 6, 6, 3, '#8a6a4a');
+    S.lampGlows.push(el('ellipse', { cx: 5, cy: 30, rx: 22, ry: 26, fill: 'url(#lampglow)' }, lp));
+  });
+}
+
+function plant(g, x, y, s = 1) {
+  box(g, x - .22 * s, y - .22 * s, .44 * s, .44 * s, 15 * s, 0, '#c96f3b');
+  box(g, x - .24 * s, y - .24 * s, .48 * s, .48 * s, 3, 15 * s, '#a85a2e');
+  const [px, py] = iso(x, y, 18 * s);
+  [[-9, -6, 9, '#2f8a3f'], [8, -10, 9, '#2f8a3f'], [0, -20, 11, '#3c9a4a'], [-6, -16, 8, '#47ad57'], [9, -2, 6, '#47ad57'], [3, -28, 7, '#58c068']]
+    .forEach(([dx, dy, r, c]) => el('circle', { cx: px + dx * s, cy: py + dy * s, r: r * s, fill: c }, g));
 }
 function cooler(g, x, y) {
-  box(g, x - .25, y - .25, .5, .5, 30, 0, '#dfe6ee');
-  const [px, py] = iso(x, y, 30);
-  el('rect', { x: px - 7, y: py - 22, width: 14, height: 20, fill: '#8fd3ff', opacity: .85, rx: 3 }, g);
+  box(g, x - .28, y - .28, .56, .56, 34, 0, '#e3e9f0');
+  R(g, iso(x, y, 34)[0] - 4, iso(x, y, 34)[1] - 6, 8, 4, '#c8d2de');
+  const [px, py] = iso(x, y, 38);
+  el('rect', { x: px - 8, y: py - 24, width: 16, height: 22, fill: '#8fd3ff', opacity: .85, rx: 4 }, g);
+  R(g, px - 5, py - 20, 3, 14, '#ffffff', { opacity: .5 });
+}
+function shelf(g, x, y) {
+  box(g, x, y, 1.8, .4, 74, 0, '#7a5434');
+  // livros na face +y
+  const f = onFaceY(g, x + .06, y + .4, 70);
+  const cols = ['#e63946', '#457b9d', '#2a9d8f', '#e9c46a', '#f4a261', '#6d597a', '#1d3557', '#ffb703'];
+  for (let shelfN = 0; shelfN < 3; shelfN++) {
+    let u = 1;
+    const base = 6 + shelfN * 22;
+    R(f, 0, base + 16, 54, 2, '#5c3d24');
+    while (u < 50) {
+      const w = 3 + ((u * 7 + shelfN) % 3), h = 12 + ((u + shelfN * 3) % 4);
+      R(f, u, base + 16 - h, w, h, cols[(u + shelfN) % cols.length]);
+      u += w + .5;
+    }
+  }
+}
+function coffee(g, x, y) {
+  box(g, x, y, .55, 1.1, 30, 0, '#6b5238');
+  box(g, x + .08, y + .3, .32, .45, 22, 30, '#2b2f36');
+  const [px, py] = iso(x + .24, y + .75, 40);
+  R(g, px - 3, py - 4, 6, 3, '#e63946', { class: 'blinkled' });
+  const [cx, cy] = iso(x + .25, y + .95, 30);
+  R(g, cx - 3, cy - 6, 6, 6, '#fff');
+  el('rect', { x: cx - 2, y: cy - 12, width: 2, height: 4, fill: '#fff', opacity: .6, class: 'steam fb' }, g);
 }
 
+// ------------------------------------------------------------- mesa + PC
 function desk(g, x, y, j) {
-  const w = 1.6, d = .9, h = 22;
-  // pes
-  [[x + .05, y + d - .1], [x + w - .1, y + d - .1]].forEach(([a, b]) => box(g, a, b, .06, .06, h - 3, 0, '#5a4632'));
-  box(g, x, y, w, d, 4, h - 4, '#a8794e');
-  // monitor (a tela fica de frente pra quem olha)
-  box(g, x + .95, y + .2, .58, .12, 24, h, '#2b2f36');
-  const scr = el('polygon', { points: P([iso(x + .98, y + .32, h + 22), iso(x + 1.5, y + .32, h + 22), iso(x + 1.5, y + .32, h + 3), iso(x + .98, y + .32, h + 3)]), fill: '#1b2a3d' }, g);
-  S['scr' + j] = scr;
-  // caneca e teclado
-  box(g, x + .25, y + .45, .5, .2, 2, h, '#e6e6e6');
-  box(g, x + .82, y + .62, .1, .1, 6, h, TC[j]);
-  // plaquinha com o nome na frente da mesa
-  const [tx, ty] = iso(x + w / 2, y + d, 8);
-  const tag = el('g', { transform: `matrix(1,-0.5,0,1,${tx - 26},${ty + 2})` }, g);
-  el('rect', { x: 0, y: -2, width: 52, height: 12, fill: '#1a1a1a', stroke: TC[j], 'stroke-width': 1 }, tag);
-  const t = el('text', { x: 26, y: 7, 'font-size': 6, fill: TC[j], 'text-anchor': 'middle' }, tag);
-  t.textContent = S.names[j].toUpperCase();
-  codeScreen(g, x, y, h, j);
+  const w = DESK_W, d = DESK_D, h = DESK_H;
+  // gaveteiro e pes
+  box(g, x + w - .55, y + .08, .5, d - .16, h - 4, 0, '#8f6640');
+  [[x + .06, y + d - .12], [x + .06, y + .06]].forEach(([a, b]) => box(g, a, b, .07, .07, h - 4, 0, '#4a3826'));
+  // tampo
+  box(g, x, y, w, d, 4, h - 4, '#b6865a');
+  // monitor (tela na face +y, virada pra camera e pro trader)
+  const mx = x + MON_X, my = y + .12, mw = MON_W;
+  box(g, mx + mw / 2 - .08, my + .02, .16, .1, 6, h, '#1e2228');                // pe
+  box(g, mx + mw / 2 - .2, my - .04, .4, .2, 1.5, h, '#1e2228');                // base
+  box(g, mx, my, mw, .1, 26, h + 6, '#23272f');                                 // moldura
+  const scr = onFaceY(g, mx + .03, my + .1, h + 30);
+  const SW = (mw - .06) * T, SH = 22;
+  const cid = 'clip' + j;
+  const cp = el('clipPath', { id: cid }, scr); R(cp, 0, 0, SW, SH, '#000');
+  const bg = R(scr, 0, 0, SW, SH, '#0d1b2a');
+  const inner = el('g', { 'clip-path': `url(#${cid})` }, scr);
+  const grid = el('g', { opacity: .25 }, inner);
+  for (let k = 1; k < 4; k++) R(grid, 0, k * SH / 4, SW, .5, '#8fb3ff');
+  const line = el('polyline', { fill: 'none', stroke: '#26a69a', 'stroke-width': 1.2, points: '' }, inner);
+  const entry = el('line', { x1: 0, x2: SW, y1: -10, y2: -10, stroke: '#ffd166', 'stroke-width': .8, 'stroke-dasharray': '2 1' }, inner);
+  const codeG = el('g', { opacity: 0 }, inner);
+  R(codeG, 0, 0, SW, SH, '#0b1a12');
+  const scroll = el('g', { class: 'code fb' }, codeG);
+  const cols = ['#4ade80', '#a3e635', '#60a5fa', '#facc15', '#f472b6'];
+  for (let r = 0; r < 22; r++) {
+    const ind = (r * 3 + j) % 4, wd = Math.min(4 + ((r * 7 + j * 5) % 14), SW - 3 - ind * 1.5);
+    R(scroll, 1.5 + ind * 1.5, 1 + r * 2, wd, 1, cols[(r + j) % cols.length]);
+  }
+  R(scr, 0, 0, SW, 2, '#ffffff', { opacity: .08 });
+  S['scr' + j] = { bg, line, entry, codeG, scroll, SW, SH };
+  // teclado, mouse, caneca, papeis
+  const kx0 = x + SEAT_DX - .31;
+  box(g, kx0, y + .55, .62, .2, 2, h, '#d9dde3');
+  for (let k = 0; k < 6; k++) { const [kx, ky] = iso(kx0 + .04 + k * .1, y + .61, h + 2); R(g, kx - 1, ky - 1, 2, 1, '#9aa1ab'); }
+  box(g, kx0 + .72, y + .6, .1, .12, 2, h, '#d9dde3');
+  if (j % 2 === 0) {
+    box(g, x + 1.68, y + .55, .14, .14, 7, h, TC[j]);
+    const [sx, sy] = iso(x + 1.75, y + .62, h + 9);
+    el('rect', { x: sx - 1, y: sy - 6, width: 1.5, height: 4, fill: '#fff', opacity: .6, class: 'steam fb' }, g);
+    el('rect', { x: sx + 1.5, y: sy - 6, width: 1.5, height: 4, fill: '#fff', opacity: .6, class: 'steam s2 fb' }, g);
+  } else {
+    box(g, x + 1.6, y + .5, .26, .28, 2, h, '#f8f9fa');
+    box(g, x + 1.62, y + .48, .24, .28, 1, h + 2, '#fff3bf');
+  }
+  box(g, x + .12, y + .12, .3, .25, 12, h, '#2b2f36');            // luminaria de mesa
+  const [lx, ly] = iso(x + .27, y + .25, h + 12);
+  R(g, lx - 6, ly - 3, 12, 4, '#ffd166');
 }
 
-function agent(g, x, y, j, name) {
+// ------------------------------------------------------------- trader (de costas, olhando o PC)
+function trader(g, x, y, j, name) {
   const [ax, ay] = iso(x, y, 0);
   const root = el('g', { transform: `translate(${ax},${ay})` }, g);
-  el('ellipse', { cx: 0, cy: 0, rx: 13, ry: 6, fill: '#0004' }, root);
-  // cadeira
-  el('rect', { x: -12, y: -46, width: 24, height: 26, fill: '#30343c' }, root);
-  el('rect', { x: -12, y: -20, width: 24, height: 6, fill: '#22252b' }, root);
-  const body = el('g', { class: 'bob slow' }, root);
-  const c = TC[j];
-  el('rect', { x: -10, y: -38, width: 20, height: 22, fill: c }, body);           // camisa
-  el('rect', { x: -10, y: -38, width: 20, height: 3, fill: shade(c, .25) }, body);
-  el('rect', { x: -14, y: -34, width: 4, height: 14, fill: shade(c, -.15) }, body); // bracos
-  el('rect', { x: 10, y: -34, width: 4, height: 14, fill: shade(c, -.15) }, body);
-  el('rect', { x: -14, y: -21, width: 4, height: 4, fill: '#f1c27d' }, body);
-  el('rect', { x: 10, y: -21, width: 4, height: 4, fill: '#f1c27d' }, body);
-  el('rect', { x: -3, y: -41, width: 6, height: 4, fill: '#e0ac69' }, body);         // pescoco
-  el('rect', { x: -9, y: -58, width: 18, height: 18, fill: '#f1c27d' }, body);       // cabeca
-  el('rect', { x: -10, y: -61, width: 20, height: 6, fill: HAIR[j] }, body);         // cabelo
-  el('rect', { x: -10, y: -56, width: 3, height: 7, fill: HAIR[j] }, body);
-  const eyes = el('g', {}, body);
-  el('rect', { x: -5, y: -51, width: 3, height: 3, fill: '#222' }, eyes);
-  el('rect', { x: 2, y: -51, width: 3, height: 3, fill: '#222' }, eyes);
-  const mouth = el('path', { d: '', stroke: '#7a3b2e', 'stroke-width': 2, fill: 'none' }, body);
-  const sweat = el('rect', { x: 9, y: -54, width: 3, height: 5, fill: '#8fd3ff', opacity: 0 }, body);
-  // balao
-  const bub = el('g', { transform: 'translate(0,-70)' }, root);
+  const c = TC[j], skin = SKIN[j], hair = HAIR[j];
+  el('ellipse', { cx: 0, cy: 1, rx: 15, ry: 6, fill: '#0004' }, root);
+  // virado na diagonal pro monitor: ombros e cadeira acompanham a borda da mesa
+  const TURN = 'matrix(1,0.32,0,1,0,0)';
+  const chair = el('g', { transform: TURN }, root);
+  [[-12, -1], [10, -1], [-2, 3], [-8, 2], [6, 2]].forEach(([dx, dy]) => R(chair, dx, dy, 4, 2, '#222'));
+  R(chair, -1, -14, 3, 13, '#3a3f4a');
+  R(chair, -13, -19, 26, 6, '#3a3f4a'); R(chair, -13, -19, 26, 2, '#4a505c');
+  const seat = el('g', {}, root);
+  const body = el('g', { class: 'breathe fb' }, el('g', { transform: TURN }, seat));
+  // maos no teclado (atras do corpo pra camera: desenhadas antes)
+  const hands = el('g', {}, body);
+  const hl = el('g', { class: 'typeL fb' }, hands), hr = el('g', { class: 'typeR fb' }, hands);
+  R(hl, -18, -44, 6, 4, skin); R(hl, -18, -40, 6, 2, shade(c, -.2));
+  R(hr, 12, -47, 6, 4, skin); R(hr, 12, -43, 6, 2, shade(c, -.2));
+  // bracos
+  R(body, -16, -40, 5, 12, shade(c, -.18)); R(body, 11, -42, 5, 13, shade(c, -.25));
+  // tronco (costas)
+  R(body, -11, -42, 22, 24, c);
+  R(body, 5, -42, 6, 24, shade(c, -.15));
+  R(body, -11, -42, 22, 3, shade(c, .2));
+  R(body, -1, -40, 2, 18, shade(c, -.1));
+  // encosto da cadeira cobre a lombar (fica no lugar quando a pessoa levanta)
+  const back = el('g', { transform: TURN }, root);
+  R(back, -12, -32, 24, 15, '#2a2e36'); R(back, -12, -32, 24, 2, '#3d434f'); R(back, -2, -18, 4, 3, '#2a2e36');
+  // pescoco e cabeca (nuca)
+  R(body, -3, -46, 6, 5, shade(skin, -.08));
+  R(body, -9, -62, 18, 17, hair);
+  R(body, -9, -62, 18, 4, shade(hair, .25));
+  R(body, 4, -58, 5, 12, shade(hair, -.2));
+  R(body, -11, -54, 2, 5, skin); R(body, 9, -54, 2, 5, skin);  // orelhas
+  if (j % 2 === 1) {                                               // headset
+    R(body, -10, -64, 20, 2, '#222'); R(body, -12, -56, 3, 7, '#222'); R(body, 9, -56, 3, 7, '#222');
+    R(body, 11, -50, 2, 6, '#222');
+  }
+  // plaquinha com o nome (no chao, estilo Habbo)
+  const tagW = name.length * 6 + 12;
+  R(root, -tagW / 2, 7, tagW, 11, '#000', { opacity: .75, rx: 2 });
+  R(root, -tagW / 2, 7, 3, 11, c);
+  el('text', { x: 2, y: 15, 'font-size': 6, fill: '#fff', 'text-anchor': 'middle' }, root).textContent = name.toUpperCase();
+  // estresse: simbolo de raiva + fumacinha + gotas
+  const stress = el('g', { opacity: 0 }, seat);
+  const anger = el('g', { class: 'throb fb' }, stress);
+  [[0, 0], [5, 0], [0, 5], [5, 5]].forEach(([dx, dy]) => R(anger, 11 + dx, -72 + dy, 4, 1.5, '#e63946'));
+  [[1, -2], [6, -2], [1, 3], [6, 3]].forEach(([dx, dy]) => R(anger, 11 + dx + 1, -72 + dy, 1.5, 4, '#e63946'));
+  [[-6, -66, ''], [-2, -68, 'd1'], [3, -66, 'd2']].forEach(([dx, dy, k]) => el('circle', { cx: dx, cy: dy, r: 3, fill: '#d0d4da', class: `puff ${k} fb` }, stress));
+  R(stress, -13, -58, 2, 4, '#8fd3ff', { class: 'float fb' });
+  // alegria: brilhos
+  const joy = el('g', { opacity: 0 }, seat);
+  [[-16, -66], [15, -70], [0, -76]].forEach(([dx, dy]) => el('text', { x: dx, y: dy, 'font-size': 7, fill: '#ffd166', class: 'throb fb' }, joy).textContent = '✦');
+  // balao de fala
+  const bub = el('g', { transform: 'translate(0,-84)' }, seat);
   const bubInner = el('g', {}, bub);
-  const bubRect = el('rect', { x: -34, y: -20, width: 68, height: 20, rx: 3, fill: '#fff', stroke: '#000', 'stroke-width': 2 }, bubInner);
+  const bubRect = R(bubInner, -34, -20, 68, 20, '#fff', { rx: 3, stroke: '#000', 'stroke-width': 2 });
   el('polygon', { points: '-5,-1 5,-1 0,7', fill: '#fff', stroke: '#000', 'stroke-width': 2 }, bubInner);
-  el('rect', { x: -4, y: -2, width: 8, height: 3, fill: '#fff' }, bubInner);
+  R(bubInner, -4, -2, 8, 3, '#fff');
   const bubText = el('text', { x: 0, y: -7, 'font-size': 7, 'text-anchor': 'middle', fill: '#333' }, bubInner);
-  const conf = el('rect', { x: -30, y: -4, width: 0, height: 2, fill: '#999' }, bubInner);
-  return { root, body, mouth, sweat, bub, bubInner, bubRect, bubText, conf, head: [ax, ay - 70], want: null, mood: null, x, y };
+  const conf = R(bubInner, -30, -4, 0, 2, '#999');
+  return { root, seat, body, hands, stress, joy, bub, bubInner, bubRect, bubText, conf, head: [ax, ay - 86], want: null, mood: null,
+           j, x, y, c, skin, hair };
 }
 
-function robot(g, x, y) {
+// ------------------------------------------------------------- MEGAZORD: computador quantico
+function megazord(g, x, y) {
   const [rx, ry] = iso(x, y, 0);
-  const root = el('g', { transform: `translate(${rx},${ry})` }, g);
-  el('ellipse', { cx: 0, cy: 0, rx: 26, ry: 11, fill: '#0005' }, root);
-  const b = el('g', { class: 'bob slow' }, root);
-  const M = '#9aa6b8', Md = '#6c788a', Gd = '#ffd166';
-  el('rect', { x: -16, y: -26, width: 12, height: 26, fill: Md }, b);   // pernas
-  el('rect', { x: 4, y: -26, width: 12, height: 26, fill: Md }, b);
-  el('rect', { x: -18, y: -4, width: 15, height: 5, fill: '#444' }, b);
-  el('rect', { x: 3, y: -4, width: 15, height: 5, fill: '#444' }, b);
-  el('rect', { x: -26, y: -76, width: 52, height: 52, fill: M }, b);   // tronco
-  el('rect', { x: -26, y: -76, width: 52, height: 6, fill: Gd }, b);
-  el('rect', { x: -38, y: -72, width: 12, height: 36, fill: Md }, b);  // bracos
-  el('rect', { x: 26, y: -72, width: 12, height: 36, fill: Md }, b);
-  el('rect', { x: -40, y: -38, width: 16, height: 10, fill: Gd }, b);
-  el('rect', { x: 24, y: -38, width: 16, height: 10, fill: Gd }, b);
-  const core = el('rect', { x: -10, y: -66, width: 20, height: 14, fill: '#555', class: 'glow' }, b); // reator no peito
-  const lights = [];
-  for (let k = 0; k < 5; k++) lights.push(el('rect', { x: -21 + k * 9, y: -46, width: 6, height: 6, fill: '#2a2f38', stroke: '#000', 'stroke-width': 1 }, b));
-  el('rect', { x: -18, y: -104, width: 36, height: 28, fill: M }, b);  // cabeca
-  el('rect', { x: -4, y: -112, width: 8, height: 8, fill: Gd }, b);
-  el('rect', { x: -2, y: -120, width: 4, height: 8, fill: Md }, b);
-  const visor = el('rect', { x: -14, y: -96, width: 28, height: 9, fill: '#111' }, b);
-  const eyeL = el('rect', { x: -10, y: -94, width: 6, height: 5, fill: '#5ff' }, b);
-  const eyeR = el('rect', { x: 4, y: -94, width: 6, height: 5, fill: '#5ff' }, b);
-  const tag = el('text', { x: 0, y: 16, 'font-size': 7, 'text-anchor': 'middle', fill: Gd }, root); tag.textContent = 'MEGAZORD';
-  const bub = el('g', { transform: 'translate(0,-130)' }, root);
+  const root = el('g', {}, g);
+  const bot = el('g', {}, root);
+  const H = 132, w = 1.3, d = 1.1, x0 = x - w / 2, y0 = y - d / 2;
+  // sombra e brilho no chao
+  el('ellipse', { cx: rx, cy: ry + 4, rx: 70, ry: 30, fill: '#00e5ff', opacity: .08, class: 'ring' }, bot);
+  // base e gabinete
+  box(bot, x0 - .08, y0 - .08, w + .16, d + .16, 8, 0, '#11141a');
+  box(bot, x0, y0, w, d, H, 8, '#1c2027');
+  // face +x: rack com LEDs piscando
+  const side = el('g', { transform: `matrix(1,-0.5,0,1,${iso(x0 + w, y0 + d, H + 4)[0]},${iso(x0 + w, y0 + d, H + 4)[1]})` }, bot);
+  for (let r = 0; r < 11; r++) {
+    R(side, 4, 6 + r * 11, d * T - 8, 8, '#14171d');
+    for (let k = 0; k < 4; k++) R(side, 7 + k * 6, 9 + r * 11, 3, 2, ['#2ee66b', '#3b8cff', '#ffd166', '#2ee66b'][(r + k) % 4], { class: `rack ${['', 'r2', 'r3'][(r * 3 + k) % 3]}` });
+    R(side, d * T - 14, 8 + r * 11, 6, 4, '#0b0d11');
+  }
+  // face +y: janela de vidro com o "lustre" quantico dourado
+  const front = onFaceY(bot, x0, y0 + d, H + 4);
+  const FW = w * T, FH = H - 4;
+  R(front, 0, 0, FW, FH, '#15181e');
+  R(front, 5, 6, FW - 10, 80, '#0a1a24');
+  R(front, 5, 6, FW - 10, 80, 'none', { stroke: '#3a4452', 'stroke-width': 1.5 });
+  const ch = el('g', { class: 'qspin', transform: 'scale(1,.84)' }, front), cx = FW / 2, gold = '#d4a64a', goldL = '#f2cf7a';
+  [[18, 30], [24, 46], [30, 62], [22, 78]].forEach(([hw, yy], i) => {
+    R(ch, cx - hw, yy, hw * 2, 4, i % 2 ? gold : goldL);
+    R(ch, cx - hw, yy + 4, hw * 2, 1, '#7a5a1e');
+  });
+  for (const dx of [-14, -6, 2, 10]) R(ch, cx + dx, 16, 2, 66, '#b8892f');
+  for (const dx of [-18, -10, 6, 14]) for (let yy = 34; yy < 78; yy += 4) R(ch, cx + dx + ((yy / 4) % 2), yy, 1.5, 2, '#c0c7d2');
+  R(ch, cx - 8, 82, 16, 10, '#b8892f'); R(ch, cx - 4, 92, 8, 4, '#7fd4ff');
+  el('circle', { cx: cx, cy: 79, r: 8, fill: '#7fd4ff', opacity: .25, class: 'ring' }, front);
+  R(front, 8, 9, 6, 74, '#ffffff', { opacity: .06 });
+  // vapor de refrigeracao saindo de baixo do vidro
+  [[12, 'v1'], [FW / 2, 'v2'], [FW - 14, 'v3']].forEach(([vx, k]) => el('circle', { cx: vx, cy: 86, r: 4, fill: '#cfe9ff', class: `vapor ${k} fb` }, front));
+  // display com os votos
+  R(front, 5, 92, FW - 10, 32, '#06121f');
+  R(front, 5, 92, FW - 10, 32, 'none', { stroke: '#3a4452', 'stroke-width': 1 });
+  const lbl = el('text', { x: 9, y: 100, 'font-size': 4.5, fill: '#7fd4ff' }, front); lbl.textContent = 'VOTOS';
+  const barsG = el('g', { transform: `translate(${FW / 2 - 17}, ${122 + 80})` }, front);
+  const bars = [];
+  for (let k = 0; k < 5; k++) bars.push(R(barsG, k * 7, -83, 5, 3, '#2a2f38'));
+  const core = el('circle', { cx: FW - 13, cy: 100, r: 3, fill: '#666' }, front);
+  // faixa de LED no topo (cor da posicao)
+  const top = iso(x0, y0, H + 8);
+  const eye = el('polygon', { points: P([iso(x0, y0 + d, H + 8), iso(x0 + w, y0 + d, H + 8), iso(x0 + w, y0 + d, H + 5), iso(x0, y0 + d, H + 5)]), fill: '#5ff' }, bot);
+  el('polygon', { points: P([iso(x0, y0 + d, H + 8), iso(x0 + w, y0 + d, H + 8), iso(x0 + w, y0 + d, H + 5), iso(x0, y0 + d, H + 5)]), fill: '#fff', opacity: 0, class: 'flash' }, bot);
+  // placa com o nome
+  const [px, py] = iso(x0 + w / 2, y0 + d, 0);
+  const tag = el('text', { x: px, y: py + 16, 'font-size': 7, 'text-anchor': 'middle', fill: '#7fd4ff', stroke: '#000', 'stroke-width': 2, 'paint-order': 'stroke' }, root);
+  tag.textContent = 'MEGAZORD Q-CORE';
+  // balao
+  const [hx, hy] = iso(x, y, H + 14);
+  const bub = el('g', { transform: `translate(${hx},${hy - 14})` }, root);
   const bubInner = el('g', {}, bub);
-  const bubRect = el('rect', { x: -60, y: -22, width: 120, height: 22, rx: 3, fill: '#111', stroke: Gd, 'stroke-width': 2 }, bubInner);
-  el('polygon', { points: '-5,0 5,0 0,7', fill: Gd }, bubInner);
-  const bubText = el('text', { x: 0, y: -8, 'font-size': 8, 'text-anchor': 'middle', fill: Gd }, bubInner);
-  return { root, core, lights, visor, eyeL, eyeR, bubInner, bubText, bubRect, head: [rx, ry - 140], say: null };
+  const bubRect = R(bubInner, -60, -22, 120, 22, '#0b0f15', { rx: 3, stroke: '#7fd4ff', 'stroke-width': 2 });
+  el('polygon', { points: '-5,0 5,0 0,7', fill: '#7fd4ff' }, bubInner);
+  const bubText = el('text', { x: 0, y: -8, 'font-size': 8, 'text-anchor': 'middle', fill: '#cfe9ff' }, bubInner);
+  return { root, bot, core, bars, eye, bubInner, bubText, bubRect, head: [hx, hy - 30], say: null };
 }
 
-// ============================================================== atualizar a cena
+// ============================================================== modo trading (replay / ao vivo / demo do treino)
 const WANT = { 1: ['COMPRA!', '#1e63d6'], '-1': ['VENDE!', '#d9661f'], 0: ['...', '#777'] };
 function fitBubble(rect, text, min) {
   const w = Math.max(min, Math.ceil(text.getComputedTextLength()) + 16);
   rect.setAttribute('x', -w / 2); rect.setAttribute('width', w);
 }
+function setBubble(a, text, color, frac, barColor) {
+  a.bubText.textContent = text; a.bubText.setAttribute('fill', color);
+  fitBubble(a.bubRect, a.bubText, 60);
+  const w = +a.bubRect.getAttribute('width');
+  a.conf.setAttribute('x', -w / 2 + 4); a.conf.setAttribute('width', Math.max(0, (w - 8) * (frac ?? 0)));
+  a.conf.setAttribute('fill', barColor || color);
+  a.bubRect.setAttribute('stroke', color === '#777' ? '#000' : color);
+}
+function popEl(e) { e.classList.remove('pop'); void e.getBBox(); e.classList.add('pop'); }
+function setMood(a, mood) {  // 'stress' | 'joy' | 'calm'
+  if (a.mood === mood) return;
+  a.mood = mood;
+  a.stress.setAttribute('opacity', mood === 'stress' ? 1 : 0);
+  a.joy.setAttribute('opacity', mood === 'joy' ? 1 : 0);
+  a.body.classList.toggle('shake', mood === 'stress');
+}
+function drawScreen(j, k, tr) {
+  const s = S['scr' + j];
+  s.codeG.setAttribute('opacity', 0);
+  const seg = ep.bars.slice(Math.max(0, k - 40), k + 1).map(b => b[4]);
+  let lo = Math.min(...seg), hi = Math.max(...seg);
+  const e = tr && tr.pos ? ep.bars[k][4] - tr.unreal * tr.pos : null;
+  if (e != null) { lo = Math.min(lo, e); hi = Math.max(hi, e); }
+  const rng = Math.max(hi - lo, 1), yOf = v => s.SH - 2 - (v - lo) / rng * (s.SH - 4);
+  s.line.setAttribute('points', seg.map((v, i) => `${1 + i * (s.SW - 2) / Math.max(seg.length - 1, 1)},${yOf(v)}`).join(' '));
+  s.line.setAttribute('stroke', seg.at(-1) >= seg[0] ? '#26a69a' : '#ef5350');
+  if (e != null) { s.entry.setAttribute('y1', yOf(e)); s.entry.setAttribute('y2', yOf(e)); } else { s.entry.setAttribute('y1', -10); s.entry.setAttribute('y2', -10); }
+  s.bg.setAttribute('fill', tr && tr.pos ? (tr.unreal >= 0 ? '#0f2a1a' : '#2a0f14') : '#0d1b2a');
+}
+
 function render() {
-  if (!ep) return;
+  if (!ep || !S.agents.length) return;
   const n = ep.bars.length, k = Math.min(p, n - 1), st = byI.get(k), bar = ep.bars[k];
   const nx = ep.next && ep.next.i === k ? ep.next : null;
   const names = ep.team.names, E = ep.team.enter;
@@ -382,27 +639,24 @@ function render() {
 
   $('clock').textContent = `${ep.day} ${bar[0]}`;
   const done = ep.trades.filter(t => t.exit_i <= k), pts = done.reduce((a, t) => a + t.pts, 0);
-  $('score').textContent = sgn(pts); $('score-unit').textContent = 'pts'; $('score').className = 'score ' + (pts > 0 ? 'good' : pts < 0 ? 'bad' : '');
+  $('score').textContent = sgn(pts); $('score-unit').textContent = 'pts';
+  $('score').className = 'score ' + (pts > 0 ? 'good' : pts < 0 ? 'bad' : '');
 
   // telao
+  S.tvTitle.textContent = 'MEGAZORD';
   S.tvPrice.textContent = 'WIN ' + fmt(bar[4]);
   S.tvTime.textContent = bar[0];
   const seg = ep.bars.slice(Math.max(0, k - 90), k + 1).map(b => b[4]);
   const lo = Math.min(...seg), hi = Math.max(...seg), rng = Math.max(hi - lo, 1);
-  S.tvLine.setAttribute('points', seg.map((v, i) => `${6 + i * (180 / Math.max(seg.length - 1, 1))},${66 - (v - lo) / rng * 26}`).join(' '));
-  S.tvLine.setAttribute('stroke', seg.at(-1) >= seg[0] ? '#26a69a' : '#ef5350');
+  S.tvLine.setAttribute('points', seg.map((v, i) => `${6 + i * (188 / Math.max(seg.length - 1, 1))},${70 - (v - lo) / rng * 28}`).join(' '));
+  S.tvLine.setAttribute('stroke', seg.at(-1) >= seg[0] ? '#26a69a' : '#ef5350'); S.tvLine.setAttribute('stroke-width', 1.5);
   S.tvStatus.textContent = pos > 0 ? '▲ COMPRADO' : pos < 0 ? '▼ VENDIDO' : '■ ZERADO';
   S.tvStatus.setAttribute('fill', pos > 0 ? '#3b8cff' : pos < 0 ? '#ff8a3d' : '#8a96b3');
   S.tvScore.textContent = `${sgn(pts)} PTS`;
 
   // relogio, ceu e luzes da cidade pelo horario do candle
   const [hh, mm] = bar[0].split(':').map(Number);
-  S.hh.setAttribute('transform', `rotate(${(hh % 12) * 30 + mm / 2},12,12)`);
-  S.mm.setAttribute('transform', `rotate(${mm * 6},12,12)`);
-  const t = Math.min(1, Math.max(0, (hh * 60 + mm - 540) / 570));
-  $('sky1').setAttribute('stop-color', t < .7 ? '#8fd3ff' : t < .9 ? '#f4a261' : '#2b2d5c');
-  $('sky2').setAttribute('stop-color', t < .7 ? '#e0f4ff' : t < .9 ? '#ffd6a5' : '#6a4c93');
-  document.querySelectorAll('.winlight').forEach((w, i) => w.setAttribute('opacity', t > .8 && (i * 7) % 3 ? 1 : 0));
+  sky(hh, mm);
 
   // traders
   names.forEach((nm, j) => {
@@ -411,44 +665,76 @@ function render() {
     if (a.want !== w) {
       a.want = w;
       const [txt, col] = WANT[w];
-      a.bubText.textContent = txt; a.bubText.setAttribute('fill', col);
-      a.bubRect.setAttribute('stroke', w ? col : '#000');
-      a.bubInner.classList.remove('pop'); void a.bubInner.getBBox(); a.bubInner.classList.add('pop');
+      setBubble(a, txt, col, Math.max(...pr));
+      popEl(a.bubInner);
+    } else {
+      const wd = +a.bubRect.getAttribute('width');
+      a.conf.setAttribute('width', (wd - 8) * Math.max(...pr));
     }
-    a.conf.setAttribute('width', 60 * Math.max(...pr)); a.conf.setAttribute('fill', WANT[w][1]);
-    a.body.classList.toggle('slow', !(tr && tr.pos));          // digitando rapido quando posicionado
-    const mood = tr ? (tr.pos ? Math.sign(tr.unreal) : Math.sign(tr.pnl)) : 0;
-    if (a.mood !== mood) {
-      a.mood = mood;
-      a.mouth.setAttribute('d', mood > 0 ? 'M-4,-46 L-2,-44 L2,-44 L4,-46' : mood < 0 ? 'M-4,-43 L-2,-45 L2,-45 L4,-43' : 'M-3,-45 L3,-45');
-      a.sweat.setAttribute('opacity', mood < 0 && tr && tr.pos ? 1 : 0);
-    }
-    const scr = S['scr' + j];
-    scr.setAttribute('fill', tr && tr.pos ? (tr.unreal >= 0 ? '#1f7a3a' : '#8a1f2a') : '#1b2a3d');
+    a.hands.parentNode.parentNode.classList.toggle('idle', !(tr && tr.pos) && w === 0);
+    setMood(a, tr && tr.pos ? (tr.unreal < -40 ? 'stress' : tr.unreal > 40 ? 'joy' : 'calm') : (tr && tr.pnl < -300 ? 'stress' : 'calm'));
+    drawScreen(j, k, tr);
   });
 
   // Megazord
-  const R = S.mz;
-  const core = pos > 0 ? '#3b8cff' : pos < 0 ? '#ff8a3d' : '#555';
-  R.core.setAttribute('fill', core);
-  R.lights.forEach((l, i) => l.setAttribute('fill', i < votes.long ? '#3b8cff' : i < votes.long + votes.short ? '#ff8a3d' : '#2a2f38'));
-  const eye = pos ? (st.unreal >= 0 ? '#5f5' : '#f55') : '#5ff';
-  R.eyeL.setAttribute('fill', eye); R.eyeR.setAttribute('fill', eye);
+  const Z = S.mz;
+  Z.core.setAttribute('fill', pos > 0 ? '#3b8cff' : pos < 0 ? '#ff8a3d' : '#666');
+  Z.bars.forEach((b, i) => {
+    const on = i < votes.long ? '#3b8cff' : i < votes.long + votes.short ? '#ff8a3d' : null;
+    b.setAttribute('fill', on || '#2a2f38'); b.setAttribute('height', on ? 18 : 3); b.setAttribute('y', on ? -98 : -83);
+  });
+  Z.eye.setAttribute('fill', pos > 0 ? '#3b8cff' : pos < 0 ? '#ff8a3d' : '#5ff');
   let say;
   if (pos === 0) say = votes.long >= E ? 'ENTRA COMPRADO!' : votes.short >= E ? 'ENTRA VENDIDO!' : `${Math.max(votes.long, votes.short)}/${names.length} ... ESPERANDO`;
   else say = `${pos > 0 ? 'COMPRADO' : 'VENDIDO'} ${sgn(st.unreal)}`;
-  if (R.say !== say) {
-    R.say = say; R.bubText.textContent = say; fitBubble(R.bubRect, R.bubText, 90);
-    R.bubRect.setAttribute('stroke', pos > 0 ? '#3b8cff' : pos < 0 ? '#ff8a3d' : '#ffd166');
-    if (!say.includes('ESPERANDO') || !R.lastWait) { R.bubInner.classList.remove('pop'); void R.bubInner.getBBox(); R.bubInner.classList.add('pop'); }
-    R.lastWait = say.includes('ESPERANDO');
+  if (Z.say !== say) {
+    Z.say = say; Z.bubText.textContent = say; fitBubble(Z.bubRect, Z.bubText, 90);
+    Z.bubRect.setAttribute('stroke', pos > 0 ? '#3b8cff' : pos < 0 ? '#ff8a3d' : '#7fd4ff');
+    if (!say.includes('ESPERANDO') || !Z.lastWait) popEl(Z.bubInner);
+    Z.lastWait = say.includes('ESPERANDO');
   }
 
   events(k, st, done);
   leader(st);
 }
 
-// efeitos: +pts flutuando, confete, feed de eventos
+// ciclo do dia: cor do ceu, sol/lua, estrelas, luzes da cidade e do escritorio
+const DAY = [[0, '#070b24', '#141a3d', 1], [320, '#070b24', '#141a3d', 1], [380, '#ff9e7a', '#ffd3a5', .45], [450, '#79c3ff', '#d9f1ff', 0],
+             [1010, '#79c3ff', '#d9f1ff', 0], [1090, '#ff7b54', '#ffd08a', .35], [1150, '#2b2d5c', '#6a4c93', .75], [1215, '#070b24', '#141a3d', 1], [1440, '#070b24', '#141a3d', 1]];
+const mix = (a, b, f) => {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const c = s => Math.round(((pa >> s) & 255) * (1 - f) + ((pb >> s) & 255) * f);
+  return '#' + ((c(16) << 16) | (c(8) << 8) | c(0)).toString(16).padStart(6, '0');
+};
+function sky(hh, mm) {
+  S.hh.setAttribute('transform', `rotate(${(hh % 12) * 30 + mm / 2},12,12)`);
+  S.mm.setAttribute('transform', `rotate(${mm * 6},12,12)`);
+  const m = hh * 60 + mm;
+  let k = 0; while (k < DAY.length - 2 && DAY[k + 1][0] <= m) k++;
+  const [m0, t0, b0, d0] = DAY[k], [m1, t1, b1, d1] = DAY[k + 1];
+  const f = Math.min(1, Math.max(0, (m - m0) / Math.max(m1 - m0, 1)));
+  const dark = d0 + (d1 - d0) * f;
+  $('sky1').setAttribute('stop-color', mix(t0, t1, f));
+  $('sky2').setAttribute('stop-color', mix(b0, b1, f));
+  // sol de 6h as 19h, lua de 19h as 6h, em arco
+  const W = S.cityW || 248;
+  const arc = (a, b) => { const q = ((m - a + 1440) % 1440) / (((b - a + 1440) % 1440) || 1); return [W * q, 40 - Math.sin(Math.PI * q) * 32, q >= 0 && q <= 1]; };
+  const [sx, sy, sOn] = arc(360, 1140), [lx, ly] = arc(1140, 360);
+  const sunUp = m >= 360 && m <= 1140;
+  S.sun.setAttribute('cx', sx); S.sun.setAttribute('cy', sy); S.sunHalo.setAttribute('cx', sx); S.sunHalo.setAttribute('cy', sy);
+  S.sun.setAttribute('opacity', sunUp ? 1 : 0); S.sunHalo.setAttribute('opacity', sunUp ? .25 : 0);
+  S.sun.setAttribute('fill', dark > .2 ? '#ffb070' : '#ffe08a');
+  S.moon.setAttribute('transform', `translate(${lx},${ly})`); S.moon.setAttribute('opacity', sunUp ? 0 : 1);
+  S.stars.setAttribute('opacity', Math.max(0, dark - .3) * 1.4);
+  S.cityNight.setAttribute('opacity', dark * .55);
+  S.cityLights.forEach(l => l.setAttribute('opacity', dark > +l.dataset.th * .9 + .1 ? .95 : 0));
+  S.carLights.forEach(l => l.setAttribute('opacity', dark > .3 ? 1 : 0));
+  document.querySelectorAll('.cloud').forEach(c => c.setAttribute('fill', dark > .5 ? '#5b6380' : dark > .2 ? '#ffd6c0' : '#fff'));
+  if (S.night) S.night.setAttribute('opacity', dark * .3);
+  (S.lampGlows || []).forEach(l => l.setAttribute('opacity', .35 + dark * .65));
+}
+
+// efeitos: +pts flutuando, confete, comemoracao, feed
 function events(k, st, done) {
   const forward = prev && k > prev.k && k - prev.k <= 4;
   if (forward) {
@@ -457,11 +743,12 @@ function events(k, st, done) {
       if (a && b && a.trades > b.trades) {
         const won = a.pnl >= b.pnl;
         floatText(S.agents[j].head, `${won ? '+' : ''}${fmt(a.pnl - b.pnl)}`, won ? '#2ee66b' : '#ff4d5e');
+        if (won) celebrate(S.agents[j]);
       }
     });
     for (const t of done.slice(prev.done)) {
-      floatText(S.mz.head, `${sgn(t.pts)} PTS`, t.pts > 0 ? '#2ee66b' : '#ff4d5e', 10);
-      if (t.pts > 0) confetti(S.mz.head);
+      floatText(S.mz.head, `${sgn(t.pts)} PTS`, t.pts > 0 ? '#2ee66b' : '#ff4d5e', 11);
+      if (t.pts > 0) { confetti(S.mz.head); victory(); }
       feed(`MEGAZORD ${t.side > 0 ? 'comprou' : 'vendeu'} ${t.entry_time}→${t.exit_time}: ${sgn(t.pts)} pts`, t.pts > 0 ? 'win' : 'loss');
     }
     if (st && prev.st && st.pos !== prev.st.pos && st.pos !== 0)
@@ -469,13 +756,18 @@ function events(k, st, done) {
   }
   prev = { k, st, done: done.length };
 }
+function celebrate(a) {
+  a.body.classList.remove('jump'); void a.body.getBBox(); a.body.classList.add('jump');
+  setTimeout(() => a.body.classList.remove('jump'), 1100);
+}
+function victory() { S.mz.bot.classList.add('victory'); clearTimeout(S.vt); S.vt = setTimeout(() => S.mz.bot.classList.remove('victory'), 1500); }
 function floatText([x, y], txt, color, size = 8) {
-  const t = el('text', { x, y, 'font-size': size, 'text-anchor': 'middle', fill: color, stroke: '#000', 'stroke-width': 2, 'paint-order': 'stroke', class: 'float' }, S.fx);
+  const t = el('text', { x, y, 'font-size': size, 'text-anchor': 'middle', fill: color, stroke: '#000', 'stroke-width': 2, 'paint-order': 'stroke', class: 'float fb' }, S.fx);
   t.textContent = txt; setTimeout(() => t.remove(), 1700);
 }
 function confetti([x, y]) {
   const cols = ['#ffd166', '#2ee66b', '#3b8cff', '#ff6b6b', '#ffffff'];
-  const parts = Array.from({ length: 26 }, () => ({ x, y, vx: (Math.random() - .5) * 5, vy: -Math.random() * 5 - 2,
+  const parts = Array.from({ length: 30 }, () => ({ x, y, vx: (Math.random() - .5) * 6, vy: -Math.random() * 5 - 2,
     e: el('rect', { x, y, width: 4, height: 4, fill: cols[Math.floor(Math.random() * cols.length)] }, S.fx) }));
   let f = 0;
   (function step() {
@@ -491,8 +783,6 @@ function feed(txt, cls) {
 }
 function leader(st) {
   document.querySelector('.lb h3').textContent = 'RANKING DO DIA';
-  S.tvLine.setAttribute('stroke-width', 1.5);
-  for (let j = 0; j < 10; j++) if (S['code' + j]) S['code' + j].grp.setAttribute('opacity', 0);
   S.studying = false;
   const names = ep.team.names;
   const rows = names.map((n, j) => ({ n, c: TC[j], v: st ? st.tr[j].pnl : 0 })).sort((a, b) => b.v - a.v);
@@ -503,117 +793,167 @@ function leader(st) {
 }
 
 // ============================================================== modo estudo (MODO = treino)
-function codeScreen(g, x, y, h, j) {
-  // tela do PC com "codigo" rolando, desenhada no plano da tela (some fora do modo estudo)
-  const [sx, sy] = iso(x + .98, y + .32, h + 22);
-  const grp = el('g', { transform: `matrix(1,0.5,0,1,${sx},${sy})`, opacity: 0 }, g);
-  const cid = 'clip' + j;
-  const cp = el('clipPath', { id: cid }, grp);
-  el('rect', { x: 0, y: 0, width: 16.6, height: 19 }, cp);
-  el('rect', { x: 0, y: 0, width: 16.6, height: 19, fill: '#0b1a12' }, grp);
-  const inner = el('g', { 'clip-path': `url(#${cid})` }, grp);
-  const scroll = el('g', { class: 'code' }, inner);
-  const cols = ['#4ade80', '#a3e635', '#60a5fa', '#facc15', '#f472b6'];
-  for (let r = 0; r < 20; r++) {
-    const w = 3 + ((r * 7 + j * 5) % 11), ind = (r * 3 + j) % 4;
-    el('rect', { x: 1.5 + ind, y: 1 + r * 2, width: Math.min(w, 14 - ind), height: 1, fill: cols[(r + j) % cols.length] }, scroll);
-  }
-  S['code' + j] = { grp, scroll };
-}
-
-const STUDY_ICONS = ['\u{1F9E0}', '\u{1F4C8}', '\u{1F4A1}', '+XP', '\u{1F4DA}', '\u26A1', '\u{1F3AF}'];
-function setBubble(a, text, color, frac, barColor) {
-  a.bubText.textContent = text; a.bubText.setAttribute('fill', color);
-  fitBubble(a.bubRect, a.bubText, 68);
-  const w = +a.bubRect.getAttribute('width');
-  a.conf.setAttribute('x', -w / 2 + 4); a.conf.setAttribute('width', Math.max(0, (w - 8) * (frac ?? 0)));
-  a.conf.setAttribute('fill', barColor || color);
-  a.bubRect.setAttribute('stroke', color);
-}
-
+const STUDY_ICONS = ['\u{1F9E0}', '\u{1F4C8}', '\u{1F4A1}', '+XP', '\u{1F4DA}', '⚡', '\u{1F3AF}'];
 function renderStudy() {
   const tm = index.team, trs = tm.traders;
   S.studying = true;
   const now = new Date(), hh = now.getHours(), mm = now.getMinutes();
   const hm = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   const pct = Math.round(100 * (tm.round_progress || 0));
-  $('clock').textContent = `RODADA ${tm.round} \u00b7 ${hm}`;
+  $('clock').textContent = `RODADA ${tm.round} · ${hm}`;
   $('score').textContent = pct + '%'; $('score').className = 'score'; $('score-unit').textContent = 'da rodada';
   const ready = trs.filter(x => x.phase === 'pronto').length;
-
-  // telao
-  S.tvTitle.textContent = `TREINO \u00b7 RODADA ${tm.round}`;
+  S.tvTitle.textContent = `TREINO · RODADA ${tm.round}`;
   S.tvPrice.textContent = tm.phase === 'prova do time' ? 'PROVA DO TIME' : `ESTUDANDO ${pct}%`;
   S.tvTime.textContent = hm;
-  S.tvLine.setAttribute('points', `6,58 ${6 + 180 * (tm.round_progress || 0)},58`);
+  S.tvLine.setAttribute('points', `6,62 ${6 + 188 * (tm.round_progress || 0)},62`);
   S.tvLine.setAttribute('stroke', '#b07cff'); S.tvLine.setAttribute('stroke-width', 8);
   const le = tm.last_eval;
   S.tvStatus.textContent = le ? `ULTIMA PROVA: ${sgn(le.mz_pts)} PTS` : 'PRIMEIRA RODADA';
   S.tvStatus.setAttribute('fill', le ? (le.mz_pts >= 0 ? '#2ee66b' : '#ff4d5e') : '#8a96b3');
   S.tvScore.textContent = `${ready}/${trs.length} PRONTOS`;
-  S.hh.setAttribute('transform', `rotate(${(hh % 12) * 30 + mm / 2},12,12)`);
-  S.mm.setAttribute('transform', `rotate(${mm * 6},12,12)`);
+  sky(hh, mm);
 
   trs.forEach((tr, j) => {
     const a = S.agents[j]; if (!a) return;
     const st = S.study[j] || (S.study[j] = {});
     const frac = tr.steps_total ? Math.min(1, (tr.steps_done || 0) / tr.steps_total) : 0;
-    const code = S['code' + j];
-    code.grp.setAttribute('opacity', tr.phase === 'estudando' || tr.phase === 'prova' ? 1 : 0);
-    code.scroll.classList.toggle('fast', tr.phase === 'estudando');
-    a.body.classList.toggle('slow', tr.phase !== 'estudando');
-    a.want = null; // ao voltar pro modo trading, forca redesenhar o balao
-    let face = 0, sweat = 0;
+    const s = S['scr' + j];
+    const studying = tr.phase === 'estudando' || tr.phase === 'prova';
+    s.codeG.setAttribute('opacity', studying ? 1 : 0);
+    s.scroll.classList.toggle('fast', tr.phase === 'estudando');
+    s.bg.setAttribute('fill', tr.phase === 'pronto' ? (tr.promoted ? '#0f2a1a' : '#1b1f27') : '#0b1a12');
+    a.hands.parentNode.parentNode.classList.toggle('idle', tr.phase !== 'estudando');
+    a.want = null;
     if (tr.phase === 'estudando') {
-      setBubble(a, `ESTUDANDO ${Math.round(frac * 100)}%`, '#7c3aed', frac, '#b07cff');
-      if (Math.random() < .55) floatText([a.head[0] + (Math.random() - .5) * 30, a.head[1] + 8], STUDY_ICONS[Math.floor(Math.random() * STUDY_ICONS.length)], '#d8b4ff', 9);
+      setBubble(a, `ESTUDANDO ${Math.round(frac * 100)}%`, '#7c3aed', frac, '#b07cff'); setMood(a, 'calm');
+      if (Math.random() < .55) floatText([a.head[0] + (Math.random() - .5) * 30, a.head[1] + 10], STUDY_ICONS[Math.floor(Math.random() * STUDY_ICONS.length)], '#d8b4ff', 9);
     } else if (tr.phase === 'prova') {
-      setBubble(a, 'PROVA \u{1F4DD}', '#b45309', 1, '#ffc53d'); sweat = 1;
+      setBubble(a, 'PROVA \u{1F4DD}', '#b45309', 1, '#ffc53d'); setMood(a, 'stress');
       if (Math.random() < .35) floatText(a.head, '?', '#ffc53d', 10);
     } else if (tr.phase === 'pronto') {
-      if (tr.promoted) { setBubble(a, 'PROMOVIDO! \u{1F3C6}', '#15803d', 1, '#2ee66b'); face = 1; }
-      else { setBubble(a, 'MANTIDO', '#6b7280', 1, '#9ca3af'); face = -1; }
-    } else {
-      setBubble(a, 'zzz', '#6b7280', 0);
-    }
-    a.mouth.setAttribute('d', face > 0 ? 'M-4,-46 L-2,-44 L2,-44 L4,-46' : face < 0 ? 'M-4,-43 L-2,-45 L2,-45 L4,-43' : 'M-3,-45 L3,-45');
-    a.mood = null;
-    a.sweat.setAttribute('opacity', sweat);
-    S['scr' + j].setAttribute('fill', tr.phase === 'pronto' ? (tr.promoted ? '#1f7a3a' : '#3a3f4a') : '#1b2a3d');
+      if (tr.promoted) { setBubble(a, 'PROMOVIDO! \u{1F3C6}', '#15803d', 1, '#2ee66b'); setMood(a, 'joy'); }
+      else { setBubble(a, 'MANTIDO', '#6b7280', 1, '#9ca3af'); setMood(a, 'calm'); }
+    } else { setBubble(a, 'zzz', '#6b7280', 0); setMood(a, 'calm'); }
     if (st.phase !== tr.phase) {
       if (st.phase) {
         if (tr.phase === 'prova') feed(`${tr.name} terminou de estudar e foi pra prova`, 'info');
         if (tr.phase === 'pronto') {
           feed(tr.promoted ? `${tr.name} foi PROMOVIDO! Agora vota com o cerebro novo` : `${tr.name} nao superou o campeao: mantem o cerebro anterior`, tr.promoted ? 'win' : 'loss');
-          if (tr.promoted) confetti(a.head);
+          if (tr.promoted) { confetti(a.head); celebrate(a); }
         }
       } else if (tr.phase === 'estudando') feed(`${tr.name} comecou a estudar a rodada ${tm.round}`, 'info');
-      a.bubInner.classList.remove('pop'); void a.bubInner.getBBox(); a.bubInner.classList.add('pop');
+      popEl(a.bubInner);
       st.phase = tr.phase;
     }
   });
 
-  // robo
-  const R = S.mz;
-  R.core.setAttribute('fill', '#7c3aed');
-  R.lights.forEach((l, i) => {
+  const Z = S.mz;
+  Z.core.setAttribute('fill', '#7c3aed');
+  Z.bars.forEach((b, i) => {
     const ph = trs[i]?.phase;
-    l.setAttribute('fill', ph === 'estudando' ? '#b07cff' : ph === 'prova' ? '#ffc53d' : ph === 'pronto' ? (trs[i].promoted ? '#2ee66b' : '#9ca3af') : '#2a2f38');
+    const col = ph === 'estudando' ? '#b07cff' : ph === 'prova' ? '#ffc53d' : ph === 'pronto' ? (trs[i].promoted ? '#2ee66b' : '#9ca3af') : '#2a2f38';
+    const frac = trs[i]?.steps_total ? Math.min(1, (trs[i].steps_done || 0) / trs[i].steps_total) : 0;
+    const h = ph === 'estudando' ? 3 + 15 * frac : ph ? 18 : 3;
+    b.setAttribute('fill', col); b.setAttribute('height', h); b.setAttribute('y', -80 - h);
   });
-  R.eyeL.setAttribute('fill', '#d8b4ff'); R.eyeR.setAttribute('fill', '#d8b4ff');
+  Z.eye.setAttribute('fill', '#d8b4ff');
   const say = tm.phase === 'prova do time' ? 'PROVA DO TIME!' : `RODADA ${tm.round}: ${pct}%`;
-  if (R.say !== say) { R.say = say; R.bubText.textContent = say; fitBubble(R.bubRect, R.bubText, 90); R.bubRect.setAttribute('stroke', '#b07cff'); }
+  if (Z.say !== say) { Z.say = say; Z.bubText.textContent = say; fitBubble(Z.bubRect, Z.bubText, 90); Z.bubRect.setAttribute('stroke', '#b07cff'); }
 
-  // lateral: progresso de cada um
   const ICON = { estudando: '\u{1F4DA}', prova: '\u{1F4DD}' };
   $('leader').innerHTML = trs.map((tr, j) => {
     const frac = tr.steps_total ? Math.min(1, (tr.steps_done || 0) / tr.steps_total) : 0;
-    const icon = tr.phase === 'pronto' ? (tr.promoted ? '\u{1F3C6}' : '\u2713') : ICON[tr.phase] || '\u{1F4A4}';
+    const icon = tr.phase === 'pronto' ? (tr.promoted ? '\u{1F3C6}' : '✓') : ICON[tr.phase] || '\u{1F4A4}';
     return `<div class="lrow"><span class="av" style="background:${TC[j]}"></span><span>${icon} ${tr.name}</span>
       <span class="v">${tr.phase === 'estudando' ? Math.round(frac * 100) + '%' : tr.champion_pts_dia != null ? sgn(tr.champion_pts_dia) + '/d' : ''}</span></div>`;
   }).join('') + `<div class="lrow mz"><span class="av" style="background:#ffd166"></span><span>MEGAZORD</span>
       <span class="v">${le ? sgn(le.mz_pts) : '-'}</span></div>`;
-  document.querySelector('.lb h3').textContent = `RODADA ${tm.round} \u00b7 ESTUDO`;
+  document.querySelector('.lb h3').textContent = `RODADA ${tm.round} · ESTUDO`;
+}
+
+
+// ============================================================== ida ao bebedouro (enquanto espera)
+const COOLER_SPOT = [11.75, 1.35];
+function walkerSprite(a) {
+  const g = el('g', { class: 'px' }, S.walkers);
+  el('ellipse', { cx: 0, cy: 1, rx: 9, ry: 4, fill: '#0004' }, g);
+  const body = el('g', {}, g);
+  R(el('g', { class: 'legL fb' }, body), -6, -16, 5, 16, '#2b2f3a');
+  R(el('g', { class: 'legR fb' }, body), 1, -16, 5, 16, '#23262f');
+  R(body, -9, -36, 18, 21, a.c); R(body, 4, -36, 5, 21, shade(a.c, -.15));
+  R(body, -12, -34, 4, 14, shade(a.c, -.18)); R(body, 8, -34, 4, 14, shade(a.c, -.25));
+  R(body, -12, -21, 4, 3, a.skin); R(body, 8, -21, 4, 3, a.skin);
+  R(body, -3, -40, 6, 4, a.skin);
+  const headBack = el('g', {}, body);
+  R(headBack, -8, -55, 16, 16, a.hair); R(headBack, -8, -55, 16, 4, shade(a.hair, .25));
+  const headFront = el('g', { opacity: 0 }, body);
+  R(headFront, -8, -55, 16, 16, a.skin); R(headFront, -8, -56, 16, 5, a.hair);
+  R(headFront, -5, -48, 3, 3, '#222'); R(headFront, 2, -48, 3, 3, '#222'); R(headFront, -2, -43, 4, 1.5, '#7a3b2e');
+  const cup = R(body, 8, -26, 5, 6, '#fff', { opacity: 0 });
+  const sayG = el('g', { opacity: 0 }, g);
+  R(sayG, -24, -78, 48, 16, '#fff', { rx: 3, stroke: '#000', 'stroke-width': 1.5 });
+  const say = el('text', { x: 0, y: -67, 'font-size': 6, 'text-anchor': 'middle', fill: '#1e63d6' }, sayG);
+  return { g, body, headBack, headFront, cup, sayG, say };
+}
+function startWalk(a) {
+  const back = a.y < 4;                                  // fileira de tras ou da frente
+  const aisle = back ? [[a.x, 3.55], [11.75, 3.55]] : [[a.x, 8.45], [12.55, 8.45], [12.55, 3.55], [11.75, 3.55]];
+  const path = [[a.x, a.y], ...aisle, COOLER_SPOT];
+  const sp = walkerSprite(a);
+  a.seat.setAttribute('opacity', 0);
+  S.walk = { a, sp, path: path.concat([...path].reverse().slice(1)), seg: 0, t: 0, drink: 0, last: performance.now(), drank: false };
+  feed(`${S.names[a.j]} foi beber agua 💧`, 'info');
+}
+function stepWalk(now) {
+  const w = S.walk; if (!w) return;
+  const dt = Math.min(.1, (now - w.last) / 1000); w.last = now;
+  const half = (w.path.length - 1) / 2;
+  if (w.seg === half && !w.drank) {                      // no bebedouro: para e bebe
+    w.drink += dt;
+    w.sp.g.classList.remove('walking');
+    w.sp.cup.setAttribute('opacity', 1);
+    w.sp.cup.setAttribute('y', w.drink % 1.2 < .6 ? -30 : -26);
+    w.sp.headBack.setAttribute('opacity', 1); w.sp.headFront.setAttribute('opacity', 0);
+    if (!w.bub) {
+      w.bub = el('g', { class: 'bubbles' }, S.fx);
+      const [cx, cy] = iso(12.3, .6, 52);
+      for (let k = 0; k < 4; k++) el('circle', { cx: cx - 4 + k * 3, cy, r: 1.5, fill: '#fff', style: `animation-delay:${k * .25}s` }, w.bub);
+      w.sp.sayG.setAttribute('opacity', 1); w.sp.say.textContent = ['glub glub', 'ahhh 💧', 'hidratando'][Math.floor(Math.random() * 3)];
+    }
+    if (w.drink > 2.6) { w.drank = true; w.bub.remove(); w.sp.cup.setAttribute('opacity', 0); w.sp.sayG.setAttribute('opacity', 0); }
+    return;
+  }
+  const [x0, y0] = w.path[w.seg], [x1, y1] = w.path[w.seg + 1];
+  const len = Math.hypot(x1 - x0, y1 - y0) || .01;
+  w.t += dt * 1.7 / len;
+  if (w.t >= 1) { w.t = 0; w.seg++; if (w.seg >= w.path.length - 1) return endWalk(); return; }
+  const x = x0 + (x1 - x0) * w.t, y = y0 + (y1 - y0) * w.t;
+  const [sx, sy] = iso(x, y, 0);
+  w.sp.g.setAttribute('transform', `translate(${sx},${sy})`);
+  w.sp.g.classList.add('walking');
+  const towardCam = y1 - y0 > .01;                       // vindo na direcao da camera: mostra o rosto
+  w.sp.headBack.setAttribute('opacity', towardCam ? 0 : 1); w.sp.headFront.setAttribute('opacity', towardCam ? 1 : 0);
+}
+function endWalk() {
+  const w = S.walk; if (!w) return;
+  w.sp.g.remove(); w.bub?.remove();
+  w.a.seat.setAttribute('opacity', 1);
+  S.walk = null; S.nextWalk = performance.now() + 8000 + Math.random() * 12000;
+}
+function maybeWalk(now) {
+  if (S.walk || !S.agents?.length) return;
+  if (!S.nextWalk) S.nextWalk = now + 5000 + Math.random() * 6000;
+  if (now < S.nextWalk) return;
+  // so levanta quem nao esta com dinheiro na mesa (estudando, na fila, ou zerado e sem vontade de operar)
+  const st = ep && !studyMode() ? byI.get(Math.min(p, ep.bars.length - 1)) : null;
+  const free = S.agents.filter((a, j) => {
+    if (studyMode()) return true;
+    const tr = st?.tr[j];
+    return !tr || (tr.pos === 0 && tr.want === 0);
+  });
+  if (!free.length) { S.nextWalk = now + 3000; return; }
+  startWalk(free[Math.floor(Math.random() * free.length)]);
 }
 
 // ============================================================== controles
@@ -621,12 +961,13 @@ const setPlaying = v => { playing = v; $('play').textContent = v ? '⏸' : '⏵'
 $('play').onclick = () => { if (ep && p >= ep.bars.length - 1 && !live()) { p = 0; prev = null; } setPlaying(!playing); };
 $('episode').onchange = e => { $('follow').checked = false; load(+e.target.value).then(() => setPlaying(true)); };
 document.addEventListener('keydown', e => {
-  if (!ep || e.target.tagName === 'SELECT') return;
+  if (!ep || studyMode() || e.target.tagName === 'SELECT') return;
   if (e.code === 'Space') { e.preventDefault(); $('play').click(); }
   if (e.code === 'ArrowRight') { setPlaying(false); p = Math.min(ep.bars.length - 1, p + 1); render(); }
   if (e.code === 'ArrowLeft') { setPlaying(false); $('follow').checked = false; p = Math.max(0, p - 1); render(); }
 });
 function loop(ts) {
+  maybeWalk(ts); stepWalk(ts);
   if (ep && playing && !studyMode() && !(live() && $('follow').checked)) {
     const iv = 1000 / +$('speed').value;
     if (ts - lastTick >= iv) {

@@ -106,9 +106,10 @@ def record_episode(env: WinDayTradeEnv, model, day_index: int, deterministic=Tru
 class Board:
     """Mantem o index.json do painel."""
 
-    def __init__(self, mode: str, title: str, config: dict, keep=60):
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        for f in DATA_DIR.glob("*.json"):
+    def __init__(self, mode: str, title: str, config: dict, keep=60, data_dir: Path = DATA_DIR):
+        self.dir = data_dir
+        self.dir.mkdir(parents=True, exist_ok=True)
+        for f in self.dir.glob("*.json"):
             f.unlink()
         self.index = {"mode": mode, "title": title, "config": config, "episodes": [], "metrics": [],
                       "updated": time.time()}
@@ -118,11 +119,11 @@ class Board:
     def add_episode(self, ep: dict, **extra):
         self.n += 1
         name = f"ep_{self.n}.json"
-        _write_json(DATA_DIR / name, ep)
+        _write_json(self.dir / name, ep)
         self.index["episodes"].append({"id": self.n, "file": name, "day": ep["day"], **ep["summary"], **extra})
         if len(self.index["episodes"]) > self.keep:  # em treino longo, mantem so os ultimos
             old = self.index["episodes"].pop(0)
-            (DATA_DIR / old["file"]).unlink(missing_ok=True)
+            (self.dir / old["file"]).unlink(missing_ok=True)
         self.save()
 
     def add_metrics(self, row: dict):
@@ -136,7 +137,7 @@ class Board:
 
     def upsert_live(self, ep: dict):
         """Modo ao vivo: um unico episodio (o pregao de hoje) reescrito a cada candle."""
-        _write_json(DATA_DIR / "ep_live.json", ep)
+        _write_json(self.dir / "ep_live.json", ep)
         self.index["episodes"] = [{"id": 1, "file": "ep_live.json", "day": ep["day"], **ep["summary"],
                                    "bars": len(ep["bars"])}]
         self.index["live"] = ep.get("live")
@@ -149,7 +150,7 @@ class Board:
 
     def save(self):
         self.index["updated"] = time.time()
-        _write_json(DATA_DIR / "index.json", self.index)
+        _write_json(self.dir / "index.json", self.index)
 
 
 class WatchCallback(BaseCallback):

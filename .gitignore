@@ -15,6 +15,7 @@ team_teste/
 logs/
 reports/
 dashboard/data/
+dashboard/data_*/
 *.tmp
 /*.log
 /*.err

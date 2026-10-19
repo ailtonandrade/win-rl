@@ -27,8 +27,22 @@ INI = str(ROOT / "megazord.ini")
 
 
 # ----------------------------------------------------------------------------- painel
-def start_dashboard(port: int, open_browser=True, page="escritorio"):
+def data_dir(s):
+    """Pasta dos dados do painel: dashboard/data para o time principal, dashboard/data_<pasta> para os outros
+    (assim um teste nunca sobrescreve o painel do time de verdade)."""
+    return ROOT / "dashboard" / ("data" if s.pasta_time == "team" else f"data_{s.pasta_time}")
+
+
+def start_dashboard(port: int, open_browser=True, page="escritorio", data=None):
+    data = data or ROOT / "dashboard" / "data"
+
     class Quiet(http.server.SimpleHTTPRequestHandler):
+        def translate_path(self, path):
+            clean = path.split("?", 1)[0].split("#", 1)[0]
+            if clean.startswith("/data/"):
+                return str(data / clean[len("/data/"):])
+            return super().translate_path(path)
+
         def end_headers(self):
             self.send_header("Cache-Control", "no-store")
             super().end_headers()
@@ -99,7 +113,7 @@ def update_data(s):
 # ----------------------------------------------------------------------------- modos
 def mode_treino(s):
     trs = ensure_team(s, need_champions=False)
-    board = Board("treino", "Megazord treinando", {**s.env.to_dict(), "traders": s.traders})
+    board = Board("treino", "Megazord treinando", {**s.env.to_dict(), "traders": s.traders}, data_dir=data_dir(s))
     hist = team_history(s)
     rnd = (hist[-1]["round"] + 1) if hist else 1
     done_rounds = 0
@@ -175,7 +189,7 @@ def mode_replay(s):
     trs, fns = champions(s)
     _, _, test = split(load(s.simbolo))
     base = WinDayTradeEnv(test, s.env, random_days=False)
-    board = Board("replay", "Megazord replay", {**s.env.to_dict()}, keep=10_000)
+    board = Board("replay", "Megazord replay", {**s.env.to_dict()}, keep=10_000, data_dir=data_dir(s))
     board.set_team({"static": team_card(trs)})
     days = range(max(0, len(base.days) - s.dias_teste_painel), len(base.days))
     print(f"os campeoes vao jogar {len(days)} pregoes de teste (nunca estudados)...")
@@ -201,7 +215,7 @@ def mode_ao_vivo(s):
         feed = SimFeed(df, s.velocidade_simulada)
         # no simulado, o fechamento e o do proprio pregao reproduzido
         s.fechamento = df[df["time"].dt.date == feed.day]["time"].max().strftime("%H:%M")
-    board = Board("ao_vivo", "Megazord ao vivo", {**s.env.to_dict()})
+    board = Board("ao_vivo", "Megazord ao vivo", {**s.env.to_dict()}, data_dir=data_dir(s))
     board.set_team({"static": team_card(trs)})
     board.live_status(feed.label, "conectando...")
     try:
@@ -221,7 +235,7 @@ if __name__ == "__main__":
     (ROOT / "logs").mkdir(exist_ok=True)
     print(f"MEGAZORD | modo {s.modo} | {s.traders} traders | entra com {s.votos_para_entrar}, mantem com {s.votos_para_manter}"
           f" | CONECTAR_MT5={s.conectar_mt5} ENVIAR_ORDENS={s.enviar_ordens}")
-    start_dashboard(s.porta, s.abrir_navegador, s.pagina)
+    start_dashboard(s.porta, s.abrir_navegador, s.pagina, data_dir(s))
     try:
         {"treino": mode_treino, "replay": mode_replay, "ao_vivo": mode_ao_vivo}[s.modo](s)
     except KeyboardInterrupt:
