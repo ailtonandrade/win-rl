@@ -222,10 +222,10 @@ def mode_ao_vivo(s):
         if not s.conectar_mt5:
             raise SystemExit("ENVIAR_ORDENS = true precisa de CONECTAR_MT5 = true.")
         from winrl.broker import MT5Broker
-        broker = MT5Broker(s)   # recusa na hora se a conta nao for DEMO
+        broker = MT5Broker(s)   # conta real: so com PERMITIR_CONTA_REAL e confirmacao digitada
     trs, fns = champions(s)
     if s.conectar_mt5:
-        feed = MT5Feed(s.simbolo)
+        feed = MT5Feed(s.simbolo, allow_real=s.permitir_conta_real)
     else:
         df = load(s.simbolo)
         feed = SimFeed(df, s.velocidade_simulada)

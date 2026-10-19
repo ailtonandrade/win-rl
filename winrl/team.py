@@ -49,6 +49,7 @@ class Settings:
     dias_teste_painel: int = 60
     conectar_mt5: bool = False
     enviar_ordens: bool = False
+    permitir_conta_real: bool = False   # padrao: so demo. True ainda exige digitar o numero da conta
     perda_max_dia_rs: float = 300.0     # travas do envio de ordens (so conta demo)
     max_ordens_dia: int = 60
     stop_emergencia_pts: float = 400.0

@@ -42,17 +42,18 @@ class SimFeed:
 
 
 class MT5Feed:
-    def __init__(self, symbol: str):
+    def __init__(self, symbol: str, allow_real=False):
         import MetaTrader5 as mt5
         self.mt5, self.symbol = mt5, symbol
         if not mt5.initialize():
             raise SystemExit(f"Nao conectou no MT5: {mt5.last_error()} (o terminal esta aberto e logado?)")
         acc = mt5.account_info()
-        if acc is None or acc.trade_mode != 0:
-            raise SystemExit("O MT5 nao esta numa conta DEMO. O Megazord v1 so roda em conta demo.")
+        if acc is None or (acc.trade_mode != 0 and not allow_real):
+            raise SystemExit("O MT5 nao esta numa conta DEMO. Por padrao o Megazord so roda em conta demo "
+                             "(PERMITIR_CONTA_REAL no megazord.ini muda isso).")
         if not mt5.symbol_select(symbol, True):
             raise SystemExit(f"Simbolo {symbol} nao encontrado no MT5")
-        self.label = f"MT5 conectado: {acc.server} (conta demo {acc.login})"
+        self.label = f"MT5 conectado: {acc.server} ({'CONTA REAL' if acc.trade_mode != 0 else 'conta demo'} {acc.login})"
         self.ctx_start, self.ctx_day = None, None
 
     def closed_bars(self):

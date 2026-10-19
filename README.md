@@ -15,11 +15,11 @@ scripts que conectam no MT5 abortam se a conta não for DEMO.
 | `replay` | Os campeões jogam os últimos `DIAS_TESTE_PAINEL` pregões de teste, para assistir. |
 | `ao_vivo` | Os campeões votam a cada candle de M1 fechado. `CONECTAR_MT5 = true` lê do MT5 (só conta demo); `false` simula o último pregão no relógio. Com `ENVIAR_ORDENS = false`, só mostra no painel. |
 
-### Ordens no MT5 (`ENVIAR_ORDENS = true`, só conta demo)
+### Ordens no MT5 (`ENVIAR_ORDENS = true`, demo por padrão)
 
 O Megazord manda ordens a mercado de 1 contrato no WIN vigente (ex.: `WINZ26`), seguindo a posição decidida pela votação, com as mesmas regras do treino. Para ligar: `MODO = ao_vivo`, `CONECTAR_MT5 = true`, `ENVIAR_ORDENS = true` e o botão **Algo Trading** do MT5 ligado.
 
-- Recusa qualquer conta que não seja **demo** (`winrl/broker.py`).
+- Por padrão recusa qualquer conta que não seja **demo** (`winrl/broker.py`). Conta real só com duas travas: `PERMITIR_CONTA_REAL = true` no `megazord.ini` **e** digitar o número da conta na janela ao iniciar (a cada vez). As telas mostram "🔴 CONTA REAL".
 - Stop de emergência no servidor em cada entrada (`STOP_EMERGENCIA_PTS`).
 - Perda máxima do dia em R$ e número máximo de ordens: atingiu, zera e para de entrar.
 - Zera `ZERAR_ANTES_MIN` minutos antes do último candle e ao fechar com Ctrl+C.

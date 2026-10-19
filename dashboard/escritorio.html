@@ -645,7 +645,7 @@ function render() {
   const pos = st ? st.pos : 0;
 
   const bk = live() ? index.live?.broker : null;
-  $('clock').textContent = `${ep.day} ${bar[0]}` + (bk ? ` · MT5 ${bk.position > 0 ? 'COMPRADO' : bk.position < 0 ? 'VENDIDO' : 'ZERADO'} R$ ${sgn(bk.pnl_brl, 2)}${!bk.algo_trading ? ' ⚠ ALGO TRADING DESLIGADO' : bk.blocked ? ' ⛔ TRAVADO' : ''}` : '');
+  $('clock').textContent = `${ep.day} ${bar[0]}` + (bk ? ` · ${bk.real ? '🔴 CONTA REAL ' : ''}MT5 ${bk.position > 0 ? 'COMPRADO' : bk.position < 0 ? 'VENDIDO' : 'ZERADO'} R$ ${sgn(bk.pnl_brl, 2)}${!bk.algo_trading ? ' ⚠ ALGO TRADING DESLIGADO' : bk.blocked ? ' ⛔ TRAVADO' : ''}` : '');
   const done = ep.trades.filter(t => t.exit_i <= k), pts = done.reduce((a, t) => a + t.pts, 0);
   $('score').textContent = sgn(pts); $('score-unit').textContent = 'pts';
   $('score').className = 'score ' + (pts > 0 ? 'good' : pts < 0 ? 'bad' : '');

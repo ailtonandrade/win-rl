@@ -310,7 +310,7 @@ function renderXP() {
   } else if (live()) {
     const bk = index.live?.broker;
     $('sub').textContent = bk
-      ? `MT5 ${bk.symbol}: ${bk.position > 0 ? 'COMPRADO' : bk.position < 0 ? 'VENDIDO' : 'ZERADO'} · dia R$ ${sgn(bk.pnl_brl, 2)} · ${bk.orders_today} ordens`
+      ? `${bk.real ? '🔴 CONTA REAL · ' : ''}MT5 ${bk.symbol}: ${bk.position > 0 ? 'COMPRADO' : bk.position < 0 ? 'VENDIDO' : 'ZERADO'} · dia R$ ${sgn(bk.pnl_brl, 2)} · ${bk.orders_today} ordens`
         + (!bk.algo_trading ? ' · ⚠ LIGUE O ALGO TRADING' : bk.blocked ? ` · ⛔ ${bk.blocked}` : bk.last ? ` · ultima: ${bk.last.side || ''} ${bk.last.msg}` : '')
       : (index.live?.source || '');
     $('xp').style.width = ep ? Math.min(100, 100 * ep.bars.length / 565) + '%' : '0';

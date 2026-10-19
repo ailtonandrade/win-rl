@@ -1,11 +1,14 @@
-"""Envio de ordens do Megazord para o MT5. SO FUNCIONA EM CONTA DEMO.
+"""Envio de ordens do Megazord para o MT5. Por padrao SO FUNCIONA EM CONTA DEMO.
+
+Conta real so com as duas travas: PERMITIR_CONTA_REAL = true no megazord.ini E digitar o
+numero da conta na janela ao iniciar (cada vez que o programa abre).
 
 O Megazord decide uma posicao-alvo (-1, 0, +1 contrato). O broker compara com a posicao
 real no MT5 (so as ordens com o MAGIC do Megazord) e manda uma ordem a mercado com a
 diferenca. Conta netting (padrao B3): vender 2 com 1 comprado vira 1 vendido.
 
 Travas:
-- recusa qualquer conta que nao seja DEMO, sempre (nao tem opcao para desligar);
+- recusa conta que nao seja DEMO, a nao ser com PERMITIR_CONTA_REAL + confirmacao digitada;
 - STOP de emergencia no servidor em cada entrada (se o programa cair, o MT5 fecha sozinho);
 - perda maxima no dia (R$) e numero maximo de ordens no dia: atingiu, zera e para de entrar;
 - arquivo PARAR (sem extensao) na pasta do projeto: zera e para de entrar enquanto existir;
@@ -25,6 +28,25 @@ class BrokerError(SystemExit):
     pass
 
 
+def confirm_real_account(acc, s):
+    """Segunda trava da conta real: so passa se PERMITIR_CONTA_REAL = true e o numero da conta for digitado."""
+    if not getattr(s, "permitir_conta_real", False):
+        raise BrokerError("CONTA NAO E DEMO. Por padrao o Megazord so envia ordens em conta demo. Nada foi enviado.\n"
+                          "(Para conta real: PERMITIR_CONTA_REAL = true no megazord.ini e confirmar ao iniciar.)")
+    print("\n" + "!" * 70)
+    print("  ATENCAO: CONTA REAL. As ordens do Megazord vao usar DINHEIRO DE VERDADE.")
+    print(f"  conta {acc.login} | servidor {acc.server} | {acc.company} | saldo {acc.balance:,.2f} {acc.currency}")
+    print(f"  travas: perda max R$ {s.perda_max_dia_rs:.0f}/dia, {s.max_ordens_dia} ordens/dia, stop {s.stop_emergencia_pts:.0f} pts, 1 contrato")
+    print("!" * 70)
+    try:
+        typed = input("Para confirmar, digite o NUMERO DA CONTA (qualquer outra coisa cancela): ").strip()
+    except EOFError:
+        typed = ""
+    if typed != str(acc.login):
+        raise BrokerError("Confirmacao nao bate. Nenhuma ordem sera enviada.")
+    print("Conta real confirmada.\n")
+
+
 class MT5Broker:
     def __init__(self, s, prefix="WIN"):
         import MetaTrader5 as mt5
@@ -32,8 +54,11 @@ class MT5Broker:
         if not mt5.initialize():
             raise BrokerError(f"Nao conectou no MT5: {mt5.last_error()}")
         acc = mt5.account_info()
-        if acc is None or acc.trade_mode != 0:
-            raise BrokerError("CONTA NAO E DEMO. O Megazord so envia ordens em conta demo. Nada foi enviado.")
+        if acc is None:
+            raise BrokerError("Nao foi possivel ler a conta do MT5. Nada foi enviado.")
+        self.real = acc.trade_mode != 0
+        if self.real:
+            confirm_real_account(acc, s)
         self.netting = acc.margin_mode != 2
         now = datetime.now().timestamp()
         contracts = sorted((x for x in mt5.symbols_get(f"{prefix}*") if x.expiration_time > now and "$" not in x.name and "@" not in x.name),
@@ -47,7 +72,8 @@ class MT5Broker:
         self.filling = mt5.ORDER_FILLING_FOK if info.filling_mode & 1 else mt5.ORDER_FILLING_IOC if info.filling_mode & 2 else mt5.ORDER_FILLING_RETURN
         self.orders_today, self.day, self.blocked = 0, None, None
         self.last = None
-        self.label = f"{self.symbol} na conta demo {acc.login} ({'netting' if self.netting else 'hedging'})"
+        self.label = (f"{self.symbol} na CONTA REAL {acc.login}" if self.real else f"{self.symbol} na conta demo {acc.login}") \
+            + f" ({'netting' if self.netting else 'hedging'})"
 
     # ------------------------------------------------------------------ estado
     def check_trading_enabled(self):
@@ -72,7 +98,7 @@ class MT5Broker:
 
     def status(self) -> dict:
         pos = self.position()
-        return {"symbol": self.symbol, "position": pos, "pnl_brl": round(self.pnl_today(), 2),
+        return {"symbol": self.symbol, "real": self.real, "position": pos, "pnl_brl": round(self.pnl_today(), 2),
                 "orders_today": self.orders_today, "blocked": self.blocked, "last": self.last,
                 "algo_trading": self.check_trading_enabled() is None}
 
