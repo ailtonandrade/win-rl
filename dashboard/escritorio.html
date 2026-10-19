@@ -123,18 +123,13 @@
     <span class="score" id="score">0</span><span class="meta" id="score-unit">pts</span>
     <span class="spacer"></span>
     <div class="ctl">
-      <select id="episode"></select>
-      <label class="meta"><input type="checkbox" id="follow" checked> seguir</label>
-      <button id="play">⏸</button>
-      <input type="range" id="speed" min="1" max="60" value="8" title="candles por segundo">
-      <a class="btn" href="time.html">📊 painel</a>
+      <a class="btn" href="time.html" title="graficos, rodadas e pregoes anteriores">📊 painel</a>
     </div>
   </div>
 
   <div class="box scene" id="scene">
     <svg id="svg" viewBox="30 -10 740 530" preserveAspectRatio="xMidYMid meet"></svg>
     <div class="banner" id="banner"></div>
-    <div class="hint">espaco: pausa · ← →: candle a candle</div>
   </div>
 
   <div class="side">
@@ -154,7 +149,8 @@ const sgn = (v, d = 0) => v == null || isNaN(v) ? '-' : (v > 0 ? '+' : v < 0 ? '
 let index = null, ep = null, epId = null, byI = new Map(), p = 0, playing = true, lastTick = 0, stamp = 0;
 let prev = null;
 const live = () => index && index.mode === 'ao_vivo';
-const studyMode = () => index && index.mode === 'treino' && index.team?.traders && index.team.phase !== 'rodada concluida';
+const studyMode = () => index && index.mode === 'treino' && !!index.team?.traders;
+const REPLAY_SPEED = 6;  // candles por segundo no modo replay
 async function getJSON(u) { const r = await fetch(u + '?t=' + Date.now()); if (!r.ok) throw new Error(r.status); return r.json(); }
 
 async function poll() {
@@ -164,8 +160,6 @@ async function poll() {
     stamp = idx.updated; index = idx;
     $('mode').textContent = { treino: 'TREINO', replay: 'REPLAY', ao_vivo: 'AO VIVO' }[idx.mode] || idx.mode;
     $('mode').className = 'badge ' + idx.mode;
-    $('episode').innerHTML = idx.episodes.map(e => `<option value="${e.id}">${e.round != null ? 'R' + e.round + ' ' : ''}${e.day} ${sgn(e.pnl_pts)}</option>`).join('');
-    if (epId != null) $('episode').value = epId;
     if (studyMode()) {
       banner(null);
       const tn = idx.team.traders.map(x => x.name);
@@ -176,9 +170,8 @@ async function poll() {
     const newest = idx.episodes.at(-1);
     if (!newest) return banner(live() ? 'AGUARDANDO O MERCADO' : 'AGUARDANDO O TIME', idx.live?.status || 'rode o run.bat');
     banner(null);
-    if (live()) { if ($('follow').checked || !ep) await load(newest.id); return; }
-    if (!ep || S.studying || ($('follow').checked && idx.mode === 'treino' && newest.id !== epId && p >= ep.bars.length - 1))
-      await load(idx.mode === 'replay' && !ep ? idx.episodes[0].id : newest.id);
+    if (live()) { await load(newest.id); return; }
+    if (!ep || S.studying) await load(idx.episodes[0].id);  // replay: comeca do primeiro e vai passando sozinho
   } catch (e) { console.error(e); banner('SEM DADOS', 'rode o run.bat'); }
 }
 function banner(a, b) { $('banner').style.display = a ? 'block' : 'none'; if (a) $('banner').innerHTML = a + '<br><span style="font-size:9px;color:#8a96b3">' + (b || '') + '</span>'; }
@@ -187,9 +180,9 @@ async function load(id) {
   const meta = index.episodes.find(e => e.id === id); if (!meta) return;
   const fresh = id !== epId;
   ep = await getJSON('data/' + meta.file);
-  byI = new Map(ep.steps.map(s => [s.i, s])); epId = id; $('episode').value = id;
+  byI = new Map(ep.steps.map(s => [s.i, s])); epId = id;
   if (fresh || S.studying || !S.names) { build(ep.team.names); prev = null; $('feed').innerHTML = ''; p = live() ? ep.bars.length - 1 : 0; }
-  if (live() && $('follow').checked) p = ep.bars.length - 1;
+  if (live()) p = ep.bars.length - 1;
   render();
 }
 
@@ -804,7 +797,7 @@ function renderStudy() {
   $('score').textContent = pct + '%'; $('score').className = 'score'; $('score-unit').textContent = 'da rodada';
   const ready = trs.filter(x => x.phase === 'pronto').length;
   S.tvTitle.textContent = `TREINO · RODADA ${tm.round}`;
-  S.tvPrice.textContent = tm.phase === 'prova do time' ? 'PROVA DO TIME' : `ESTUDANDO ${pct}%`;
+  S.tvPrice.textContent = tm.phase === 'prova do time' ? 'PROVA DO TIME' : tm.phase === 'rodada concluida' ? 'RODADA CONCLUIDA' : `ESTUDANDO ${pct}%`;
   S.tvTime.textContent = hm;
   S.tvLine.setAttribute('points', `6,62 ${6 + 188 * (tm.round_progress || 0)},62`);
   S.tvLine.setAttribute('stroke', '#b07cff'); S.tvLine.setAttribute('stroke-width', 8);
@@ -858,7 +851,7 @@ function renderStudy() {
     b.setAttribute('fill', col); b.setAttribute('height', h); b.setAttribute('y', -80 - h);
   });
   Z.eye.setAttribute('fill', '#d8b4ff');
-  const say = tm.phase === 'prova do time' ? 'PROVA DO TIME!' : `RODADA ${tm.round}: ${pct}%`;
+  const say = tm.phase === 'prova do time' ? 'PROVA DO TIME!' : tm.phase === 'rodada concluida' ? `RODADA ${tm.round} OK!` : `RODADA ${tm.round}: ${pct}%`;
   if (Z.say !== say) { Z.say = say; Z.bubText.textContent = say; fitBubble(Z.bubRect, Z.bubText, 90); Z.bubRect.setAttribute('stroke', '#b07cff'); }
 
   const ICON = { estudando: '\u{1F4DA}', prova: '\u{1F4DD}' };
@@ -956,24 +949,18 @@ function maybeWalk(now) {
   startWalk(free[Math.floor(Math.random() * free.length)]);
 }
 
-// ============================================================== controles
-const setPlaying = v => { playing = v; $('play').textContent = v ? '⏸' : '⏵'; };
-$('play').onclick = () => { if (ep && p >= ep.bars.length - 1 && !live()) { p = 0; prev = null; } setPlaying(!playing); };
-$('episode').onchange = e => { $('follow').checked = false; load(+e.target.value).then(() => setPlaying(true)); };
-document.addEventListener('keydown', e => {
-  if (!ep || studyMode() || e.target.tagName === 'SELECT') return;
-  if (e.code === 'Space') { e.preventDefault(); $('play').click(); }
-  if (e.code === 'ArrowRight') { setPlaying(false); p = Math.min(ep.bars.length - 1, p + 1); render(); }
-  if (e.code === 'ArrowLeft') { setPlaying(false); $('follow').checked = false; p = Math.max(0, p - 1); render(); }
-});
+// ============================================================== tempo real
 function loop(ts) {
   maybeWalk(ts); stepWalk(ts);
-  if (ep && playing && !studyMode() && !(live() && $('follow').checked)) {
-    const iv = 1000 / +$('speed').value;
+  if (ep && index?.mode === 'replay' && !studyMode()) {   // replay: avanca sozinho e passa pro proximo pregao
+    const iv = 1000 / REPLAY_SPEED;
     if (ts - lastTick >= iv) {
       const adv = Math.max(1, Math.floor((ts - lastTick) / iv)); lastTick = ts;
       if (p < ep.bars.length - 1) { p = Math.min(ep.bars.length - 1, p + adv); render(); }
-      else if (index.mode === 'replay' && $('follow').checked) { const nx = index.episodes.find(e => e.id === epId + 1); if (nx) load(nx.id); }
+      else {
+        const k = index.episodes.findIndex(e => e.id === epId);
+        load(index.episodes[(k + 1) % index.episodes.length].id);
+      }
     }
   }
   requestAnimationFrame(loop);
